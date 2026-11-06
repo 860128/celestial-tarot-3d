@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D 虚幻星宿塔罗牌 (Ethereal Constellation Tarot)</title>
+  <!-- Three.js & TWEEN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background: radial-gradient(circle at 50% 30%, #150f28 0%, #080614 60%, #020106 100%);
+      color: #e5d8b8;
+      font-family: 'Noto Serif SC', serif;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    /* 顶部标题与当前仪式进度 */
+    header {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      text-align: center;
+      pointer-events: none;
+    }
+    h1 {
+      font-family: 'Cinzel', 'Noto Serif SC', serif;
+      font-size: 24px;
+      letter-spacing: 6px;
+      background: linear-gradient(135deg, #fcedba 0%, #d4af37 50%, #8d6b08 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+      margin-bottom: 4px;
+    }
+    .ritual-status {
+      font-size: 13px;
+      color: #c9bc9e;
+      letter-spacing: 2px;
+      background: rgba(20, 14, 34, 0.7);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      padding: 5px 18px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-top: 6px;
+      pointer-events: auto;
+      backdrop-filter: blur(8px);
+    }
+
+    /* 意念/问题输入栏 */
+    .intent-box {
+      position: absolute;
+      top: 86px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+      background: rgba(14, 10, 24, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 6px 14px;
+      border-radius: 30px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    .intent-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f7e4a6;
+      font-family: inherit;
+      font-size: 13px;
+      width: 280px;
+      letter-spacing: 1px;
+    }
+    .intent-input::placeholder {
+      color: rgba(229, 216, 184, 0.4);
+    }
+
+    /* 底部圣三角牌位插槽指示器 (Slots) */
+    .spread-slots-bar {
+      position: absolute;
+      bottom: 96px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 32px;
+      pointer-events: none;
+    }
+    .slot-indicator {
+      width: 110px;
+      padding: 10px 8px;
+      border: 1px dashed rgba(212, 175, 55, 0.35);
+      border-radius: 12px;
+      background: rgba(18, 12, 32, 0.55);
+      backdrop-filter: blur(8px);
+      text-align: center;
+      transition: all 0.35s ease;
+      opacity: 0.6;
+    }
+    .slot-indicator.active {
+      border: 1px solid #d4af37;
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.2);
+      opacity: 1;
+      transform: scale(1.06);
+    }
+    .slot-indicator.filled {
+      border: 1px solid #6edaa0;
+      opacity: 0.9;
+    }
+    .slot-tag {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: #d4af37;
+      margin-bottom: 2px;
+      letter-spacing: 1px;
+    }
+    .slot-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff2cf;
+    }
+    .slot-desc {
+      font-size: 11px;
+      color: #a4977e;
+      margin-top: 2px;
+    }
+
+    /* 底部操作工具栏 */
+    .toolbar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 14px;
+      background: rgba(16, 11, 28, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 8px 20px;
+      border-radius: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(212, 175, 55, 0.1);
+    }
+    .btn {
+      background: transparent;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #f7e4a6;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: #f7e4a6;
+      box-shadow: 0 0 14px rgba(212, 175, 55, 0.4);
+      transform: translateY(-2px);
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(138, 90, 20, 0.4) 100%);
+      border-color: #d4af37;
+      font-weight: 600;
+    }
+
+    /* 牌背选择器 */
+    .back-selector {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 11, 28, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #c9b98f;
+    }
+    .back-btn {
+      width: 18px;
+      height: 26px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      background-size: cover;
+      background-position: center;
+      transition: all 0.2s;
+    }
+    .back-btn:hover, .back-btn.active {
+      border-color: #f7e4a6;
+      box-shadow: 0 0 8px #d4af37;
+      transform: scale(1.15);
+    }
+
+    /* 圣三角综合解读长卷面板 (羊皮纸神谕卷轴) */
+    .reading-scroll {
+      position: absolute;
+      top: 50%;
+      right: 32px;
+      transform: translateY(-50%) translateX(450px);
+      width: 400px;
+      max-height: 85vh;
+      background: rgba(14, 10, 24, 0.92);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 18px;
+      padding: 24px 26px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(212, 175, 55, 0.12);
+      z-index: 30;
+      overflow-y: auto;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reading-scroll.open {
+      transform: translateY(-50%) translateX(0);
+    }
+    .scroll-header {
+      text-align: center;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+    .scroll-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fcedba;
+      letter-spacing: 2px;
+    }
+    .scroll-question {
+      font-size: 13px;
+      color: #b0a38a;
+      margin-top: 4px;
+      font-style: italic;
+    }
+    .reading-card-item {
+      background: rgba(28, 20, 48, 0.4);
+      border-left: 3px solid #d4af37;
+      border-radius: 0 10px 10px 0;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+    }
+    .r-slot-label {
+      font-size: 11px;
+      color: #d4af37;
+      letter-spacing: 1px;
+      font-family: 'Cinzel', serif;
+    }
+    .r-card-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0 6px 0;
+    }
+    .r-tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .r-tag.upright {
+      background: rgba(110, 218, 160, 0.15);
+      color: #6edaa0;
+      border: 1px solid rgba(110, 218, 160, 0.3);
+    }
+    .r-tag.reversed {
+      background: rgba(246, 140, 140, 0.15);
+      color: #f68c8c;
+      border: 1px solid rgba(246, 140, 140, 0.3);
+    }
+    .r-desc {
+      font-size: 12px;
+      line-height: 1.6;
+      color: #cdc1a7;
+    }
+    .synthesis-section {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px dashed rgba(212, 175, 55, 0.3);
+    }
+    .synthesis-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fcedba;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .synthesis-text {
+      font-size: 13px;
+      line-height: 1.7;
+      color: #e5dac2;
+    }
+
+    /* AI 连线导师解读按钮 */
+    .ai-btn-box {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ai-connect-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #996515 0%, #d4af37 50%, #fcedba 100%);
+      color: #120c1f;
+      font-weight: 700;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(212, 175, 55, 0.4);
+      transition: all 0.25s ease;
+    }
+    .ai-connect-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(212, 175, 55, 0.6);
+    }
+    .ai-tip {
+      font-size: 11px;
+      color: #9f947e;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .scroll-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      color: #8c8371;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .scroll-close:hover {
+      color: #fff;
+    }
+
+    /* 复制成功气泡 */
+    .copied-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(28, 20, 48, 0.95);
+      border: 1px solid #d4af37;
+      color: #fcedba;
+      padding: 10px 24px;
+      border-radius: 30px;
+      z-index: 100;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      font-size: 13px;
+    }
+    .copied-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <header>
+    <h1>CELESTIAL TAROT</h1>
+    <div class="ritual-status" id="ritual-status">✦ 请心怀所问，点击下方星辰之牌选取第 1 张【过去】 ✦</div>
+  </header>
+
+  <div class="intent-box">
+    <span>🔮 占卜议题：</span>
+    <input type="text" id="intent-input" class="intent-input" placeholder="例如：我的事业突破口在哪？近期的发展趋势？" value="我近期的发展态势与破局启示">
+  </div>
+
+  <div class="spread-slots-bar" id="slots-bar">
+    <div class="slot-indicator active" id="slot-0">
+      <div class="slot-tag">POSITION I</div>
+      <div class="slot-name">过去 · 起因</div>
+      <div class="slot-desc">未抽取</div>
+    </div>
+    <div class="slot-indicator" id="slot-1">
+      <div class="slot-tag">POSITION II</div>
+      <div class="slot-name">现在 · 阻碍</div>
+      <div class="slot-desc">未抽取</div>
+    </div>
+    <div class="slot-indicator" id="slot-2">
+      <div class="slot-tag">POSITION III</div>
+      <div class="slot-name">未来 · 启示</div>
+      <div class="slot-desc">未抽取</div>
+    </div>
+  </div>
+
+  <div class="back-selector">
+    <span>牌背样式:</span>
+    <div class="back-btn active" style="background-image: url('./textures/backs/bm4.webp');" onclick="changeDeckBack('./textures/backs/bm4.webp', this)" title="黑金神域"></div>
+    <div class="back-btn" style="background-image: url('./textures/backs/bm3.webp');" onclick="changeDeckBack('./textures/backs/bm3.webp', this)" title="金纹秘典"></div>
+    <div class="back-btn" style="background-image: url('./textures/backs/bm2.webp');" onclick="changeDeckBack('./textures/backs/bm2.webp', this)" title="星月银河"></div>
+    <div class="back-btn" style="background-image: url('./textures/backs/bm.webp');" onclick="changeDeckBack('./textures/backs/bm.webp', this)" title="古典墨蓝"></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" onclick="toggleLayout()"><span id="layout-icon">🌌</span> <span id="layout-text">切换为拱门牌阵</span></button>
+    <button class="btn" onclick="shuffleDeck()">💫 星辰洗牌</button>
+    <button class="btn" onclick="autoDrawThree()">✨ 灵感一键三抽</button>
+    <button class="btn primary" onclick="resetRitual()">🔄 重启仪式</button>
+  </div>
+
+  <!-- 圣三角综合解盘报告长卷 -->
+  <div class="reading-scroll" id="reading-scroll">
+    <button class="scroll-close" onclick="closeScroll()">×</button>
+    <div class="scroll-header">
+      <div class="scroll-title">✦ 圣三角命运启示录 ✦</div>
+      <div class="scroll-question" id="report-question">议题：我近期的发展态势与破局启示</div>
+    </div>
+
+    <div id="report-cards-container"></div>
+
+    <div class="synthesis-section">
+      <div class="synthesis-title">📜 牌阵脉络综合断语</div>
+      <div class="synthesis-text" id="report-synthesis">正在解析牌阵星轨因果关系...</div>
+    </div>
+
+    <div class="ai-btn-box">
+      <button class="ai-connect-btn" onclick="copyPromptForAI()">
+        <span>🧙‍♂️ 复制牌面 · 发给 AI 导师深度解盘</span>
+      </button>
+      <div class="ai-tip">点击后已复制当前牌面与问题，直接在对话框中粘贴发送，我将为你进行深度一对一推演！</div>
+    </div>
+  </div>
+
+  <div class="copied-toast" id="copied-toast">✦ 占卜卦象已复制！直接在对话框粘贴发送给我即可 ✦</div>
+
+  <script>
+    // --- 22 张经典大阿尔卡纳字典 ---
+    const TAROT_CARDS = [
+      { id: 0, n: "愚者", en: "The Fool", u: "新的开端、纯真、冒险精神、无限潜能。拥抱未知，踏出信仰的一跃。", r: "盲目冒险、轻率、不顾后果的鲁莽、拖延逃避。" },
+      { id: 1, n: "魔术师", en: "The Magician", u: "专注、创造力、资源掌握、自信笃定。你拥有达成目标的一切要素。", r: "才能滥用、欺瞒、虚浮不实、意志力散漫。" },
+      { id: 2, n: "女祭司", en: "The High Priestess", u: "直觉、潜意识、深邃智慧、内在平静。相信你的第六感与梦境讯号。", r: "情绪压抑、直觉阻滞、冷漠疏离、隐秘的流言。" },
+      { id: 3, n: "皇后", en: "The Empress", u: "丰盛、母性慈爱、艺术创造、自然滋养。接纳生命中的美好与成长。", r: "过度溺爱、过度依赖、创造力阻滞、身心倦怠。" },
+      { id: 4, n: "皇帝", en: "The Emperor", u: "秩序、稳固结构、权威、坚定意志。以理性逻辑建立你的领地。", r: "暴虐专断、缺乏同理心、秩序僵化、失控的控制欲。" },
+      { id: 5, n: "教皇", en: "The Hierophant", u: "精神导师、传统智慧、集体信仰、求知若渴。在正统与学习中获得启迪。", r: "盲从教条、叛逆反抗、虚伪说教、思想禁锢。" },
+      { id: 6, n: "恋人", en: "The Lovers", u: "爱与联结、价值观契合、由心而发的重大抉择、灵魂伙伴。", r: "价值观冲突、沟通阻碍、感情破裂、不负责任的选择。" },
+      { id: 7, n: "战车", en: "The Chariot", u: "胜利、坚强意志、克服对立、勇往直前。驾驭矛盾力量冲向胜利。", r: "失控失向、挫败沮丧、急躁冲动、遭遇强烈阻力。" },
+      { id: 8, n: "力量", en: "The Strength", u: "以柔克刚、内在勇气、宽容怜悯、情绪驯服。用爱与定力降伏心魔。", r: "自我怀疑、内心软弱、屈服于原始冲动、滥用暴力。" },
+      { id: 9, n: "隐士", en: "The Hermit", u: "内在探索、独处反思、智慧明灯、静心修持。从孤独中寻找灵魂真谛。", r: "孤芳自赏、过度封闭自绝于人、逃避现实、偏执冷漠。" },
+      { id: 10, n: "命运之轮", en: "Wheel of Fortune", u: "命运转折、因果循环、良机降临、生命顺流。转机已至，顺应自然法则。", r: "不幸与波折、命运抗拒、外部失控感、停滞受阻。" },
+      { id: 11, n: "正义", en: "Justice", u: "公平正义、真理明辨、因果承担、理智抉择。客观审视一切是非功过。", r: "不公偏颇、道德虚伪、逃避责任、法律与契约纠纷。" },
+      { id: 12, n: "倒吊人", en: "The Hanged Man", u: "换位思考、自愿奉献、停顿沉淀、顿悟超越。换一个视角看世界。", r: "无谓牺牲、自怨自哀、停滞不前、精神上的盲目抗拒。" },
+      { id: 13, n: "死神", en: "Death", u: "终结与重生、旧物褪去、蜕变转型。斩断过往，迎接崭新的轮回。", r: "抗拒改变、沉湎过去无法自拔、恐惧死亡与别离、迟滞痛苦。" },
+      { id: 14, n: "节制", en: "Temperance", u: "调和融汇、平衡节制、心绪平和、炼金转化。在极端间寻找黄金中庸。", r: "失衡失度、冲突对立、身心透支、沟通无法融合。" },
+      { id: 15, n: "恶魔", en: "The Devil", u: "执念物欲、束缚成瘾、阴影投射。看清锁链的本质，重拾清醒意志。", r: "挣脱桎梏、斩断诱惑、意识觉醒、重获灵魂自由。" },
+      { id: 16, n: "高塔", en: "The Tower", u: "崩塌幻灭、突如其来的剧变、震撼觉醒。虚妄基座瓦解，真相破土而出。", r: "大祸侥幸逃脱、恐惧剧变、拖延必然的解体、隐忍危机。" },
+      { id: 17, n: "星星", en: "The Star", u: "希望、灵感丰沛、心灵抚慰、光明前景。漫长黑夜已过，恒星指引方向。", r: "丧失信心、幻灭绝望、自我怀疑、理想过于脱离现实。" },
+      { id: 18, n: "月亮", en: "The Moon", u: "潜意识、直觉幻象、不安迷雾、情绪波动。在暗夜密林中聆听内心微光。", r: "迷雾渐散、误会澄清、克服隐秘恐惧、重见清朗。" },
+      { id: 19, n: "太阳", en: "The Sun", u: "纯粹喜悦、成功辉煌、生命活力、坦荡明朗。万物沐浴在温暖的恩典中。", r: "暂时阴霾、过度自满、精力涣散、推迟的胜利。" },
+      { id: 20, n: "审判", en: "Judgement", u: "灵魂唤醒、清算救赎、重大蜕变、聆听天职召唤。做出决定一生的重生抉择。", r: "自我批判、犹豫不决、抗拒良知召唤、对过去的执迷后悔。" },
+      { id: 21, n: "世界", en: "The World", u: "圆满达成、大同圆融、愿景实现、自由畅行。旅程终章亦是更高维度的序曲。", r: "功亏一篑、缺乏收尾决断、旅途延宕、未能圆融贯通。" }
+    ];
+
+    // --- 3D 核心配置 ---
+    let scene, camera, renderer, raycaster, mouse;
+    let cards = [];
+    const CARD_W = 2.2;
+    const CARD_H = 3.8;
+    const CARD_D = 0.055;
+    let currentBackUrl = './textures/backs/bm4.webp';
+    let textureLoader;
+    let cardSharedBackMat, goldEdgeMat;
+    let hoveredCard = null;
+    let isInteracting = false;
+
+    // 牌阵模式：'constellation' (星罗棋布) | 'arch' (经典拱门)
+    let currentLayoutMode = 'constellation';
+
+    // 圣三角牌阵状态
+    // slot 0: 过去, slot 1: 现在, slot 2: 未来
+    const drawnSlots = [null, null, null];
+    let currentSlotIndex = 0;
+
+    // 3D 牌桌上 3 个圣三角卡牌底座位置
+    const SPREAD_TARGET_POSITIONS = [
+      { x: -3.4, y: -0.6, z: 4.8 }, // 过去
+      { x: 0.0,  y: -0.6, z: 5.2 }, // 现在 (略前突)
+      { x: 3.4,  y: -0.6, z: 4.8 }  // 未来
+    ];
+
+    function init() {
+      const container = document.getElementById('canvas-container');
+
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x080614, 0.032);
+
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 3.8, 14.5);
+      camera.lookAt(0, 0, 0);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.appendChild(renderer.domElement);
+
+      textureLoader = new THREE.TextureLoader();
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2(-999, -999);
+
+      setupLights();
+      setupMaterials();
+      createStarNebula();
+      createSlotRings();
+      createCards();
+
+      window.addEventListener('resize', onWindowResize);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('click', onClick);
+
+      setupOrbitMotion();
+      animate();
+    }
+
+    // 灯光
+    function setupLights() {
+      const ambientLight = new THREE.AmbientLight(0xdcd0ea, 0.75);
+      scene.add(ambientLight);
+
+      const spotLight = new THREE.SpotLight(0xfff0d8, 3.2, 35, Math.PI / 3.8, 0.35, 1);
+      spotLight.position.set(0, 11, 9);
+      spotLight.castShadow = true;
+      scene.add(spotLight);
+
+      const bluePoint = new THREE.PointLight(0x6545a4, 2.0, 25);
+      bluePoint.position.set(-11, 5, 2);
+      scene.add(bluePoint);
+
+      const goldPoint = new THREE.PointLight(0xd4af37, 2.0, 25);
+      goldPoint.position.set(11, 5, 2);
+      scene.add(goldPoint);
+    }
+
+    // 材质
+    function setupMaterials() {
+      goldEdgeMat = new THREE.MeshStandardMaterial({
+        color: 0xd4af37,
+        metalness: 0.88,
+        roughness: 0.25
+      });
+
+      const backTexture = textureLoader.load(currentBackUrl);
+      backTexture.generateMipmaps = true;
+      cardSharedBackMat = new THREE.MeshStandardMaterial({
+        map: backTexture,
+        roughness: 0.35,
+        metalness: 0.22
+      });
+    }
+
+    // 牌桌上的 3 个神圣几何光环底座 (Slot Rings)
+    function createSlotRings() {
+      SPREAD_TARGET_POSITIONS.forEach((pos, idx) => {
+        const ringGeo = new THREE.RingGeometry(1.4, 1.48, 48);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xd4af37,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.35
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(pos.x, pos.y - 0.05, pos.z);
+        scene.add(ring);
+      });
+    }
+
+    // 浪漫浩瀚的星宿粒子天河 (Star Nebula)
+    function createStarNebula() {
+      const count = 600;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(count * 3);
+      const cols = new Float32Array(count * 3);
+
+      for (let i = 0; i < count; i++) {
+        pos[i * 3] = (Math.random() - 0.5) * 50;
+        pos[i * 3 + 1] = (Math.random() - 0.5) * 30 + 2;
+        pos[i * 3 + 2] = (Math.random() - 0.5) * 35 - 3;
+
+        const isGold = Math.random() > 0.45;
+        cols[i * 3] = isGold ? 0.98 : 0.65;
+        cols[i * 3 + 1] = isGold ? 0.85 : 0.6;
+        cols[i * 3 + 2] = isGold ? 0.45 : 0.98;
+      }
+
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+
+      const mat = new THREE.PointsMaterial({
+        size: 0.14,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.75
+      });
+      scene.add(new THREE.Points(geo, mat));
+    }
+
+    // 创建 22 张卡牌
+    function createCards() {
+      const cardGeo = new THREE.BoxGeometry(CARD_W, CARD_H, CARD_D);
+
+      for (let i = 0; i < 22; i++) {
+        const frontTexture = textureLoader.load(`./textures/cards/${i}.webp`);
+        frontTexture.generateMipmaps = true;
+
+        const frontMat = new THREE.MeshStandardMaterial({
+          map: frontTexture,
+          roughness: 0.36,
+          metalness: 0.12
+        });
+
+        const materials = [
+          goldEdgeMat,       // +X
+          goldEdgeMat,       // -X
+          goldEdgeMat,       // +Y
+          goldEdgeMat,       // -Y
+          frontMat,          // +Z 牌面
+          cardSharedBackMat  // -Z 牌背
+        ];
+
+        const mesh = new THREE.Mesh(cardGeo, materials);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.userData = {
+          id: i,
+          info: TAROT_CARDS[i],
+          isDrawn: false,
+          slotIndex: -1,
+          isReversed: false,
+          homePos: { x: 0, y: 0, z: 0 },
+          homeRot: { x: 0, y: 0, z: 0 },
+          floatOffset: Math.random() * Math.PI * 2,
+          floatSpeed: 0.8 + Math.random() * 0.6
+        };
+
+        scene.add(mesh);
+        cards.push(mesh);
+      }
+
+      applyLayout(false);
+    }
+
+    // --- 两种核心布局算法 ---
+    // 1. 【星罗棋布 (Constellation Spread)】：像散落天穹的星座星宿，高低俯仰错落悬浮
+    // 2. 【经典拱门 (Arch Spread)】：半月形仪轨拱门
+    function calculatePositions() {
+      const count = cards.length;
+
+      if (currentLayoutMode === 'constellation') {
+        // 双层椭圆天体星宿分布
+        cards.forEach((card, i) => {
+          if (card.userData.isDrawn) return;
+
+          // 黄金角发散分布
+          const phi = i * 2.39996; // 黄金螺旋角
+          const r = 3.6 + Math.sqrt(i) * 1.55; 
+
+          const tx = Math.sin(phi) * r * 1.45;
+          const ty = 1.0 + Math.cos(phi * 2.1) * 1.6 + (i % 3) * 0.4;
+          const tz = -Math.cos(phi) * 3.8 - 0.5 + (i % 4) * 0.5;
+
+          // 背面朝向镜头：rotY 基础为 Math.PI，加上星辰自身微角度
+          const rx = -0.15 + Math.sin(i * 1.7) * 0.18;
+          const ry = Math.PI - (tx / 15) * 0.6 + Math.cos(i) * 0.15;
+          const rz = (Math.random() - 0.5) * 0.25;
+
+          card.userData.homePos = { x: tx, y: ty, z: tz };
+          card.userData.homeRot = { x: rx, y: ry, z: rz };
+        });
+      } else {
+        // 经典拱门排列
+        const radius = 8.2;
+        const angleSpread = Math.PI * 0.76;
+        const startAngle = -angleSpread / 2;
+
+        cards.forEach((card, i) => {
+          if (card.userData.isDrawn) return;
+          const progress = i / (count - 1);
+          const angle = startAngle + progress * angleSpread;
+
+          const tx = Math.sin(angle) * radius;
+          const tz = -Math.cos(angle) * (radius * 0.45) + 0.5;
+          const ty = 1.2 + Math.sin(progress * Math.PI) * 0.6;
+
+          const rx = -0.12;
+          const ry = -angle * 0.85 + Math.PI;
+          const rz = angle * 0.22;
+
+          card.userData.homePos = { x: tx, y: ty, z: tz };
+          card.userData.homeRot = { x: rx, y: ry, z: rz };
+        });
+      }
+    }
+
+    function applyLayout(animateIt = true) {
+      calculatePositions();
+
+      cards.forEach((card, index) => {
+        if (card.userData.isDrawn) return;
+
+        if (animateIt) {
+          new TWEEN.Tween(card.position)
+            .to(card.userData.homePos, 900 + index * 20)
+            .easing(TWEEN.Easing.Cubic.Out)
+            .start();
+
+          new TWEEN.Tween(card.rotation)
+            .to(card.userData.homeRot, 900 + index * 20)
+            .easing(TWEEN.Easing.Cubic.Out)
+            .start();
+        } else {
+          card.position.set(card.userData.homePos.x, card.userData.homePos.y, card.userData.homePos.z);
+          card.rotation.set(card.userData.homeRot.x, card.userData.homeRot.y, card.userData.homeRot.z);
+        }
+      });
+    }
+
+    // 切换布局模式
+    window.toggleLayout = function() {
+      if (isInteracting) return;
+      currentLayoutMode = currentLayoutMode === 'constellation' ? 'arch' : 'constellation';
+      document.getElementById('layout-icon').innerText = currentLayoutMode === 'constellation' ? '🌌' : '🎪';
+      document.getElementById('layout-text').innerText = currentLayoutMode === 'constellation' ? '切换为拱门牌阵' : '切换为星罗棋布';
+      applyLayout(true);
+    };
+
+    // 切换牌背
+    window.changeDeckBack = function(newUrl, btnElem) {
+      currentBackUrl = newUrl;
+      const newBackTexture = textureLoader.load(newUrl);
+      cardSharedBackMat.map = newBackTexture;
+      cardSharedBackMat.needsUpdate = true;
+      document.querySelectorAll('.back-btn').forEach(b => b.classList.remove('active'));
+      if (btnElem) btnElem.classList.add('active');
+    };
+
+    // 洗牌逻辑
+    window.shuffleDeck = function() {
+      if (isInteracting) return;
+      isInteracting = true;
+      closeScroll();
+      TWEEN.removeAll();
+
+      // 先收拢成星核
+      cards.forEach((card, idx) => {
+        if (card.userData.isDrawn) return;
+        new TWEEN.Tween(card.position)
+          .to({ x: 0, y: 1.5 + idx * 0.015, z: -1 }, 500)
+          .easing(TWEEN.Easing.Quadratic.InOut)
+          .start();
+
+        new TWEEN.Tween(card.rotation)
+          .to({ x: Math.PI / 2, y: 0, z: 0 }, 500)
+          .easing(TWEEN.Easing.Quadratic.InOut)
+          .start();
+      });
+
+      setTimeout(() => {
+        // 洗牌算法乱序
+        for (let i = cards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const temp = cards[i];
+          cards[i] = cards[j];
+          cards[j] = temp;
+        }
+        applyLayout(true);
+        setTimeout(() => {
+          isInteracting = false;
+        }, 1100);
+      }, 650);
+    };
+
+    // 重启整个圣三角仪式
+    window.resetRitual = function() {
+      if (isInteracting) return;
+      closeScroll();
+      TWEEN.removeAll();
+      drawnSlots[0] = null;
+      drawnSlots[1] = null;
+      drawnSlots[2] = null;
+      currentSlotIndex = 0;
+
+      cards.forEach(card => {
+        card.userData.isDrawn = false;
+        card.userData.slotIndex = -1;
+      });
+
+      updateSlotIndicators();
+      updateStatusHeader();
+      applyLayout(true);
+    };
+
+    // 核心：点击抽取卡牌放入圣三角指定槽位
+    function drawCardToSlot(card, slotIdx) {
+      if (isInteracting || slotIdx > 2) return;
+      isInteracting = true;
+
+      card.userData.isDrawn = true;
+      card.userData.slotIndex = slotIdx;
+      drawnSlots[slotIdx] = card;
+
+      const isReversed = Math.random() > 0.5;
+      card.userData.isReversed = isReversed;
+
+      const targetPos = SPREAD_TARGET_POSITIONS[slotIdx];
+      // 翻转到正面朝向镜头：y = 0，逆位 z = Math.PI
+      const targetRot = {
+        x: -0.1,
+        y: 0,
+        z: isReversed ? Math.PI : 0
+      };
+
+      // 拔高悬浮再稳稳落入底座
+      new TWEEN.Tween(card.position)
+        .to({ x: targetPos.x * 0.7, y: 3.2, z: 2.5 }, 400)
+        .easing(TWEEN.Easing.Quadratic.Out)
+        .chain(
+          new TWEEN.Tween(card.position)
+            .to(targetPos, 700)
+            .easing(TWEEN.Easing.Cubic.Out)
+        )
+        .start();
+
+      // 翻转动画
+      new TWEEN.Tween(card.rotation)
+        .to({ x: -0.3, y: Math.PI * 0.5, z: (isReversed ? Math.PI : 0) * 0.5 }, 400)
+        .easing(TWEEN.Easing.Quadratic.In)
+        .chain(
+          new TWEEN.Tween(card.rotation)
+            .to(targetRot, 700)
+            .easing(TWEEN.Easing.Cubic.Out)
+            .onComplete(() => {
+              isInteracting = false;
+              currentSlotIndex++;
+              updateSlotIndicators();
+              updateStatusHeader();
+
+              // 如果 3 张牌全部抽齐，自动揭幕综合解读长卷！
+              if (currentSlotIndex === 3) {
+                setTimeout(revealFullSpreadReport, 700);
+              }
+            })
+        )
+        .start();
+    }
+
+    // 一键三抽
+    window.autoDrawThree = function() {
+      if (isInteracting) return;
+      if (currentSlotIndex >= 3) {
+        resetRitual();
+        setTimeout(autoDrawThree, 800);
+        return;
+      }
+
+      function drawNext() {
+        if (currentSlotIndex >= 3) return;
+        const available = cards.filter(c => !c.userData.isDrawn);
+        if (available.length === 0) return;
+        const pick = available[Math.floor(Math.random() * available.length)];
+        drawCardToSlot(pick, currentSlotIndex);
+        if (currentSlotIndex < 2) {
+          setTimeout(drawNext, 1200);
+        }
+      }
+      drawNext();
+    };
+
+    // 更新槽位指示条 UI
+    function updateSlotIndicators() {
+      for (let i = 0; i < 3; i++) {
+        const slotEl = document.getElementById(`slot-${i}`);
+        slotEl.className = 'slot-indicator';
+        if (drawnSlots[i]) {
+          slotEl.classList.add('filled');
+          const c = drawnSlots[i];
+          slotEl.querySelector('.slot-desc').innerText = `${c.userData.info.n} (${c.userData.isReversed ? '逆' : '正'})`;
+        } else if (i === currentSlotIndex) {
+          slotEl.classList.add('active');
+          slotEl.querySelector('.slot-desc').innerText = '等待选取...';
+        } else {
+          slotEl.querySelector('.slot-desc').innerText = '未抽取';
+        }
+      }
+    }
+
+    // 更新顶部状态文字
+    function updateStatusHeader() {
+      const headerEl = document.getElementById('ritual-status');
+      const names = ['【过去 · 起因】', '【现在 · 阻碍】', '【未来 · 启示】'];
+      if (currentSlotIndex < 3) {
+        headerEl.innerText = `✦ 请心怀所问，点击星海中的任意一张牌选取 ${names[currentSlotIndex]} ✦`;
+      } else {
+        headerEl.innerText = `✦ 圣三角星轨契约已成，请参悟综合启示录 ✦`;
+      }
+    }
+
+    // 展开综合解盘长卷报告
+    function revealFullSpreadReport() {
+      const q = document.getElementById('intent-input').value.trim() || '我的近期发展与破局启示';
+      document.getElementById('report-question').innerText = `所问议题：${q}`;
+
+      const container = document.getElementById('report-cards-container');
+      container.innerHTML = '';
+
+      const slotLabels = ['I. 过去 · 起因与根基', 'II. 现在 · 现状与核心阻碍', 'III. 未来 · 演化趋势与指引'];
+
+      drawnSlots.forEach((card, idx) => {
+        const info = card.userData.info;
+        const isRev = card.userData.isReversed;
+        const item = document.createElement('div');
+        item.className = 'reading-card-item';
+        item.innerHTML = `
+          <div class="r-slot-label">${slotLabels[idx]}</div>
+          <div class="r-card-name">
+            <span>${info.id}. ${info.n} (${info.en})</span>
+            <span class="r-tag ${isRev ? 'reversed' : 'upright'}">${isRev ? '逆位 ✦ 能量受阻/偏离' : '正位 ✦ 顺畅显化'}</span>
+          </div>
+          <div class="r-desc">${isRev ? info.r : info.u}</div>
+        `;
+        container.appendChild(item);
+      });
+
+      // 智能生成综合脉络推演
+      const p = drawnSlots[0].userData;
+      const n = drawnSlots[1].userData;
+      const f = drawnSlots[2].userData;
+
+      const synthesis = generateSynthesis(q, p, n, f);
+      document.getElementById('report-synthesis').innerText = synthesis;
+
+      document.getElementById('reading-scroll').classList.add('open');
+    }
+
+    // 牌阵串联综合解卦推演算法
+    function generateSynthesis(q, p, n, f) {
+      let flow = `从过去到未来的能量流动显示：\n`;
+      flow += `在过去的阶段，你经历了「${p.info.n}」的${p.isReversed ? '失衡与挑战，导致根基带着未解的伏笔' : '积极奠基，为你带来了初始的驱动力'}；\n`;
+      flow += `而眼下处于核心转折点的是「${n.info.n}」，它揭示了当下的关键矛盾在于：${n.isReversed ? '能量产生了内耗或偏执，需警惕盲目行动' : '关键法则正在发挥作用，直面挑战是唯一的通道'}；\n`;
+      flow += `最终，局面将自然引向「${f.info.n}」的演化方向：${f.isReversed ? '提示若继续放任当前惯性，可能面临迟滞，需及时调整心态破局。' : '预示着只要理顺当下的阻碍，将迎来明朗的顺流与突破！'}\n\n`;
+      flow += `✦ 核心行动建议：不要畏惧当下的阻力，将过去获得的智慧转化为现在的清醒抉择。`;
+      return flow;
+    }
+
+    // 复制占卜数据，方便直接发给当前对话的 AI（即你和我）进行深度大师解盘！
+    window.copyPromptForAI = function() {
+      if (currentSlotIndex < 3) return;
+      const q = document.getElementById('intent-input').value.trim() || '我的近期发展与破局启示';
+      const c1 = drawnSlots[0].userData;
+      const c2 = drawnSlots[1].userData;
+      const c3 = drawnSlots[2].userData;
+
+      const promptText = `你好！我刚刚在 3D 塔罗模拟器中完成了【圣三角牌阵】的占卜，请作为资深塔罗大师为我做深度心理与现实结合的推演解读：
+
+🔮 【我求问的议题】：${q}
+📜 【圣三角牌面信息】：
+1. 【过去 · 起因】：第 ${c1.info.id} 号牌《${c1.info.n} (${c1.info.en})》· 【${c1.isReversed ? '逆位' : '正位'}】
+2. 【现在 · 阻碍】：第 ${c2.info.id} 号牌《${c2.info.n} (${c2.info.en})》· 【${c2.isReversed ? '逆位' : '正位'}】
+3. 【未来 · 启示】：第 ${c3.info.id} 号牌《${c3.info.n} (${c3.info.en})》· 【${c3.isReversed ? '逆位' : '正位'}】
+
+请帮我把这三张牌的因果脉络贯穿起来，针对我的议题给出具体的破局洞察与行动建议！`;
+
+      navigator.clipboard.writeText(promptText).then(() => {
+        const toast = document.getElementById('copied-toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+      });
+    };
+
+    window.closeScroll = function() {
+      document.getElementById('reading-scroll').classList.remove('open');
+    };
+
+    // 鼠标悬停星宿卡牌时的动态拔高与微观交互
+    function onMouseMove(event) {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      if (isInteracting) return;
+
+      raycaster.setFromCamera(mouse, camera);
+      const availableCards = cards.filter(c => !c.userData.isDrawn);
+      const intersects = raycaster.intersectObjects(availableCards);
+
+      if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        if (hoveredCard !== hit) {
+          if (hoveredCard && !hoveredCard.userData.isDrawn) {
+            resetHover(hoveredCard);
+          }
+          hoveredCard = hit;
+          document.body.style.cursor = 'pointer';
+
+          new TWEEN.Tween(hoveredCard.position)
+            .to({
+              x: hoveredCard.userData.homePos.x,
+              y: hoveredCard.userData.homePos.y + 0.6,
+              z: hoveredCard.userData.homePos.z + 0.8
+            }, 200)
+            .easing(TWEEN.Easing.Cubic.Out)
+            .start();
+        }
+      } else {
+        if (hoveredCard && !hoveredCard.userData.isDrawn) {
+          resetHover(hoveredCard);
+          hoveredCard = null;
+          document.body.style.cursor = 'default';
+        }
+      }
+    }
+
+    function resetHover(card) {
+      new TWEEN.Tween(card.position)
+        .to(card.userData.homePos, 250)
+        .easing(TWEEN.Easing.Cubic.Out)
+        .start();
+    }
+
+    function onClick(event) {
+      if (isInteracting) return;
+      if (event.target.closest('.toolbar') || 
+          event.target.closest('.back-selector') || 
+          event.target.closest('.reading-scroll') ||
+          event.target.closest('.intent-box')) {
+        return;
+      }
+
+      if (currentSlotIndex >= 3) {
+        document.getElementById('reading-scroll').classList.add('open');
+        return;
+      }
+
+      raycaster.setFromCamera(mouse, camera);
+      const availableCards = cards.filter(c => !c.userData.isDrawn);
+      const intersects = raycaster.intersectObjects(availableCards);
+
+      if (intersects.length > 0) {
+        const clicked = intersects[0].object;
+        drawCardToSlot(clicked, currentSlotIndex);
+      }
+    }
+
+    // 相机微动视差
+    function setupOrbitMotion() {
+      let targetCamX = 0;
+      let targetCamY = 3.8;
+
+      window.addEventListener('mousemove', (e) => {
+        const nx = (e.clientX / window.innerWidth) - 0.5;
+        const ny = (e.clientY / window.innerHeight) - 0.5;
+        targetCamX = nx * 2.5;
+        targetCamY = 3.8 - ny * 1.5;
+      });
+
+      function updateCamera() {
+        camera.position.x += (targetCamX - camera.position.x) * 0.04;
+        camera.position.y += (targetCamY - camera.position.y) * 0.04;
+        camera.lookAt(0, 0, 0);
+        requestAnimationFrame(updateCamera);
+      }
+      updateCamera();
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // 动画循环：包含星宿微呼吸浮动
+    function animate(time) {
+      requestAnimationFrame(animate);
+      TWEEN.update(time);
+
+      // 星罗棋布模式下的失重呼吸悬浮动效
+      if (currentLayoutMode === 'constellation' && !isInteracting) {
+        const t = time * 0.0015;
+        cards.forEach(card => {
+          if (!card.userData.isDrawn && card !== hoveredCard) {
+            const offset = card.userData.floatOffset;
+            const spd = card.userData.floatSpeed;
+            card.position.y = card.userData.homePos.y + Math.sin(t * spd + offset) * 0.08;
+            card.position.x = card.userData.homePos.x + Math.cos(t * spd * 0.8 + offset) * 0.04;
+          }
+        });
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
