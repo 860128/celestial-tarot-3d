@@ -2,8 +2,12 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D 虚幻星宿塔罗牌 (Ethereal Constellation Tarot)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- 强制移动端与浏览器禁止强缓存，确保每次访问均拉取最新版 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>3D 虚幻星宿塔罗牌 v2.5 (Ethereal Constellation Tarot)</title>
   <!-- Three.js & TWEEN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
@@ -16,14 +20,15 @@
       margin: 0;
       padding: 0;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    body {
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background: radial-gradient(circle at 50% 30%, #150f28 0%, #080614 60%, #020106 100%);
       color: #e5d8b8;
       font-family: 'Noto Serif SC', serif;
-      overflow: hidden;
-      width: 100vw;
-      height: 100vh;
     }
     #canvas-container {
       width: 100%;
@@ -34,44 +39,12 @@
       z-index: 1;
     }
 
-    /* 顶部标题与当前仪式进度 */
-    header {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      text-align: center;
-      pointer-events: none;
-    }
-    h1 {
-      font-family: 'Cinzel', 'Noto Serif SC', serif;
-      font-size: 24px;
-      letter-spacing: 6px;
-      background: linear-gradient(135deg, #fcedba 0%, #d4af37 50%, #8d6b08 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
-      margin-bottom: 4px;
-    }
-    .ritual-status {
-      font-size: 13px;
-      color: #c9bc9e;
-      letter-spacing: 2px;
-      background: rgba(20, 14, 34, 0.7);
-      border: 1px solid rgba(212, 175, 55, 0.25);
-      padding: 5px 18px;
-      border-radius: 20px;
-      display: inline-block;
-      margin-top: 6px;
-      pointer-events: auto;
-      backdrop-filter: blur(8px);
-    }
+    /* ================= PC 宽屏默认样式 ================= */
 
-    /* 意念/问题输入区域 (高交互感设计) */
-    .intent-container {
+    /* 顶部流式 HUD 容器 (单一 Flex 容器，从结构上杜绝任何重叠) */
+    .pc-top-hud {
       position: absolute;
-      top: 80px;
+      top: 14px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
@@ -79,6 +52,34 @@
       flex-direction: column;
       align-items: center;
       gap: 7px;
+      pointer-events: none;
+      width: 100%;
+      max-width: 650px;
+    }
+    .pc-top-hud > * {
+      pointer-events: auto;
+    }
+    h1 {
+      font-family: 'Cinzel', 'Noto Serif SC', serif;
+      font-size: 24px;
+      letter-spacing: 5px;
+      background: linear-gradient(135deg, #fcedba 0%, #d4af37 50%, #8d6b08 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+      margin-bottom: 0;
+      line-height: 1.2;
+    }
+    .ritual-status {
+      font-size: 13px;
+      color: #c9bc9e;
+      letter-spacing: 2px;
+      background: rgba(20, 14, 34, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      padding: 5px 18px;
+      border-radius: 20px;
+      display: inline-block;
+      backdrop-filter: blur(8px);
     }
     .intent-box {
       display: flex;
@@ -90,13 +91,12 @@
       border-radius: 30px;
       backdrop-filter: blur(14px);
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 175, 55, 0.15);
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.3s ease;
       cursor: text;
     }
     .intent-box:hover, .intent-box:focus-within {
       border-color: #fcedba;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 25px rgba(212, 175, 55, 0.4);
-      transform: translateY(-1px);
     }
     .intent-label {
       font-size: 13px;
@@ -114,11 +114,8 @@
       color: #fff4d1;
       font-family: inherit;
       font-size: 13.5px;
-      width: 290px;
+      width: 280px;
       letter-spacing: 0.6px;
-    }
-    .intent-input::placeholder {
-      color: rgba(229, 216, 184, 0.4);
     }
     .edit-badge {
       font-size: 11px;
@@ -128,13 +125,7 @@
       border-radius: 10px;
       font-weight: 700;
       white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    /* 快捷预设标签 */
     .topic-chips {
       display: flex;
       gap: 6px;
@@ -143,7 +134,6 @@
     .topic-chip-label {
       font-size: 11px;
       color: rgba(212, 175, 55, 0.7);
-      letter-spacing: 1px;
     }
     .topic-chip {
       font-size: 11px;
@@ -153,111 +143,15 @@
       padding: 3px 10px;
       border-radius: 12px;
       cursor: pointer;
-      transition: all 0.2s ease;
-      backdrop-filter: blur(6px);
+      transition: all 0.2s;
     }
     .topic-chip:hover {
       background: rgba(212, 175, 55, 0.25);
       border-color: #fcedba;
       color: #fff;
-      transform: translateY(-1px);
-      box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
     }
 
-    /* 底部圣三角牌位插槽指示器 (Slots) */
-    .spread-slots-bar {
-      position: absolute;
-      bottom: 96px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      display: flex;
-      gap: 32px;
-      pointer-events: none;
-    }
-    .slot-indicator {
-      width: 110px;
-      padding: 10px 8px;
-      border: 1px dashed rgba(212, 175, 55, 0.35);
-      border-radius: 12px;
-      background: rgba(18, 12, 32, 0.55);
-      backdrop-filter: blur(8px);
-      text-align: center;
-      transition: all 0.35s ease;
-      opacity: 0.6;
-    }
-    .slot-indicator.active {
-      border: 1px solid #d4af37;
-      box-shadow: 0 0 16px rgba(212, 175, 55, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.2);
-      opacity: 1;
-      transform: scale(1.06);
-    }
-    .slot-indicator.filled {
-      border: 1px solid #6edaa0;
-      opacity: 0.9;
-    }
-    .slot-tag {
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      color: #d4af37;
-      margin-bottom: 2px;
-      letter-spacing: 1px;
-    }
-    .slot-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff2cf;
-    }
-    .slot-desc {
-      font-size: 11px;
-      color: #a4977e;
-      margin-top: 2px;
-    }
-
-    /* 底部操作工具栏 */
-    .toolbar {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      display: flex;
-      gap: 14px;
-      background: rgba(16, 11, 28, 0.85);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      padding: 8px 20px;
-      border-radius: 40px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(212, 175, 55, 0.1);
-    }
-    .btn {
-      background: transparent;
-      border: 1px solid rgba(212, 175, 55, 0.4);
-      color: #f7e4a6;
-      padding: 7px 16px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn:hover {
-      background: rgba(212, 175, 55, 0.2);
-      border-color: #f7e4a6;
-      box-shadow: 0 0 14px rgba(212, 175, 55, 0.4);
-      transform: translateY(-2px);
-    }
-    .btn.primary {
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(138, 90, 20, 0.4) 100%);
-      border-color: #d4af37;
-      font-weight: 600;
-    }
-
-    /* 右上角神秘学祭坛配置工坊 */
+    /* 右上角配置面板 (PC 展开，手机弹窗) */
     .altar-panel {
       position: absolute;
       top: 18px;
@@ -266,12 +160,12 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      background: rgba(14, 10, 26, 0.82);
+      background: rgba(14, 10, 26, 0.85);
       backdrop-filter: blur(14px);
       border: 1px solid rgba(212, 175, 55, 0.3);
       padding: 10px 14px;
       border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(212, 175, 55, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
     }
     .panel-row {
       display: flex;
@@ -299,8 +193,7 @@
       cursor: pointer;
       background-size: cover;
       background-position: center;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
+      transition: all 0.2s;
     }
     .back-btn:hover, .back-btn.active {
       border-color: #fcedba;
@@ -315,17 +208,104 @@
       padding: 3px 8px;
       border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
       white-space: nowrap;
     }
-    .theme-chip:hover, .theme-chip.active {
-      background: rgba(212, 175, 55, 0.25);
+    .theme-chip.active {
+      background: rgba(212, 175, 55, 0.3);
       border-color: #fcedba;
       color: #fff;
-      box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
     }
 
-    /* 圣三角综合解读长卷面板 (羊皮纸神谕卷轴) */
+    /* 圣三角牌位插槽指示器 */
+    .spread-slots-bar {
+      position: absolute;
+      bottom: 96px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 28px;
+      pointer-events: none;
+    }
+    .slot-indicator {
+      width: 110px;
+      padding: 9px 8px;
+      border: 1px dashed rgba(212, 175, 55, 0.35);
+      border-radius: 12px;
+      background: rgba(18, 12, 32, 0.65);
+      backdrop-filter: blur(8px);
+      text-align: center;
+      transition: all 0.35s ease;
+      opacity: 0.65;
+    }
+    .slot-indicator.active {
+      border: 1px solid #d4af37;
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.2);
+      opacity: 1;
+      transform: scale(1.06);
+    }
+    .slot-indicator.filled {
+      border: 1px solid #6edaa0;
+      opacity: 0.95;
+    }
+    .slot-tag {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      color: #d4af37;
+      margin-bottom: 2px;
+    }
+    .slot-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff2cf;
+    }
+    .slot-desc {
+      font-size: 11px;
+      color: #a4977e;
+      margin-top: 2px;
+    }
+
+    /* 底部操作工具栏 */
+    .toolbar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      gap: 12px;
+      background: rgba(16, 11, 28, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 8px 18px;
+      border-radius: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+    .btn {
+      background: transparent;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #f7e4a6;
+      padding: 7px 15px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: #f7e4a6;
+    }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.35) 0%, rgba(138, 90, 20, 0.45) 100%);
+      border-color: #d4af37;
+      font-weight: 600;
+    }
+
+    /* 启示录长卷面板 */
     .reading-scroll {
       position: absolute;
       top: 50%;
@@ -333,15 +313,15 @@
       transform: translateY(-50%) translateX(450px);
       width: 400px;
       max-height: 85vh;
-      background: rgba(14, 10, 24, 0.92);
+      background: rgba(14, 10, 24, 0.94);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(212, 175, 55, 0.45);
       border-radius: 18px;
-      padding: 24px 26px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(212, 175, 55, 0.12);
+      padding: 22px 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
       z-index: 30;
       overflow-y: auto;
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .reading-scroll.open {
       transform: translateY(-50%) translateX(0);
@@ -350,7 +330,7 @@
       text-align: center;
       border-bottom: 1px solid rgba(212, 175, 55, 0.25);
       padding-bottom: 12px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
     .scroll-title {
       font-size: 20px;
@@ -362,10 +342,9 @@
       font-size: 13px;
       color: #b0a38a;
       margin-top: 4px;
-      font-style: italic;
     }
     .reading-card-item {
-      background: rgba(28, 20, 48, 0.4);
+      background: rgba(28, 20, 48, 0.45);
       border-left: 3px solid #d4af37;
       border-radius: 0 10px 10px 0;
       padding: 10px 14px;
@@ -374,7 +353,6 @@
     .r-slot-label {
       font-size: 11px;
       color: #d4af37;
-      letter-spacing: 1px;
       font-family: 'Cinzel', serif;
     }
     .r-card-name {
@@ -393,20 +371,18 @@
     .r-tag.upright {
       background: rgba(110, 218, 160, 0.15);
       color: #6edaa0;
-      border: 1px solid rgba(110, 218, 160, 0.3);
     }
     .r-tag.reversed {
       background: rgba(246, 140, 140, 0.15);
       color: #f68c8c;
-      border: 1px solid rgba(246, 140, 140, 0.3);
     }
     .r-desc {
-      font-size: 12px;
+      font-size: 12.5px;
       line-height: 1.6;
       color: #cdc1a7;
     }
     .synthesis-section {
-      margin-top: 18px;
+      margin-top: 16px;
       padding-top: 14px;
       border-top: 1px dashed rgba(212, 175, 55, 0.3);
     }
@@ -415,22 +391,15 @@
       font-weight: 700;
       color: #fcedba;
       margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
     .synthesis-text {
       font-size: 13px;
       line-height: 1.7;
       color: #e5dac2;
+      white-space: pre-line;
     }
-
-    /* AI 连线导师解读按钮 */
     .ai-btn-box {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      margin-top: 18px;
     }
     .ai-connect-btn {
       width: 100%;
@@ -438,256 +407,231 @@
       color: #120c1f;
       font-weight: 700;
       border: none;
-      padding: 12px;
+      padding: 11px;
       border-radius: 12px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13.5px;
       font-family: inherit;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 18px rgba(212, 175, 55, 0.4);
-      transition: all 0.25s ease;
-    }
-    .ai-connect-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(212, 175, 55, 0.6);
-    }
-    .ai-tip {
-      font-size: 11px;
-      color: #9f947e;
-      text-align: center;
-      line-height: 1.4;
     }
     .scroll-close {
       position: absolute;
-      top: 14px;
-      right: 16px;
+      top: 12px;
+      right: 14px;
       background: transparent;
       border: none;
       color: #8c8371;
-      font-size: 20px;
+      font-size: 22px;
       cursor: pointer;
     }
-    .scroll-close:hover {
-      color: #fff;
+
+    /* 移动端专属浮动按钮 (平时隐藏) */
+    .mobile-header-bar {
+      display: none;
+    }
+    .mobile-modal-overlay {
+      display: none;
     }
 
     /* 复制成功气泡 */
     .copied-toast {
       position: fixed;
-      top: 20px;
+      top: 16px;
       left: 50%;
       transform: translateX(-50%) translateY(-100px);
-      background: rgba(28, 20, 48, 0.95);
+      background: rgba(28, 20, 48, 0.96);
       border: 1px solid #d4af37;
       color: #fcedba;
-      padding: 10px 24px;
+      padding: 8px 20px;
       border-radius: 30px;
       z-index: 100;
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      font-size: 13px;
+      font-size: 12px;
     }
     .copied-toast.show {
       transform: translateX(-50%) translateY(0);
     }
-    /* 移动端专属浮动切换设置按钮（平时折叠） */
-    .mobile-settings-toggle {
-      display: none;
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      z-index: 25;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(18, 12, 32, 0.85);
-      border: 1px solid rgba(212, 175, 55, 0.4);
-      color: #fcedba;
-      font-size: 16px;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
 
-    /* 移动端 (手机竖屏) 深度响应式适配 */
-    @media (max-width: 768px) {
-      .mobile-settings-toggle {
+
+    /* ================= 移动端 (手机竖屏) 终极极简设计 ================= */
+    @media (max-width: 768px), (max-aspect-ratio: 1/1) {
+      /* 隐藏 PC 端顶栏与面板，移动端使用极简灵动条 */
+      .pc-top-hud { display: none; }
+      .altar-panel { display: none; }
+
+      /* 移动端顶部灵动条 (高度仅 44px，完全释放 3D 视野！) */
+      .mobile-header-bar {
         display: flex;
+        position: absolute;
+        top: env(safe-area-inset-top, 8px);
+        left: 10px;
+        right: 10px;
+        height: 42px;
+        z-index: 20;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(14, 10, 26, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 25px;
+        padding: 0 10px;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.5);
       }
-
-      /* 顶部精简 */
-      header {
-        top: 10px;
-        width: 100%;
-        padding: 0 46px 0 14px;
-        box-sizing: border-box;
+      .mobile-logo-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        overflow: hidden;
       }
-      h1 {
-        font-size: 16px;
-        letter-spacing: 2px;
-        margin-bottom: 2px;
+      .m-logo {
+        font-family: 'Cinzel', serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fcedba;
+        white-space: nowrap;
       }
-      .ritual-status {
+      .m-status-text {
         font-size: 11px;
-        letter-spacing: 0.5px;
-        padding: 3px 10px;
-        margin-top: 2px;
-        max-width: 86vw;
+        color: #bfae8c;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 140px;
+      }
+      .mobile-action-capsules {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .m-capsule-btn {
+        background: rgba(36, 26, 60, 0.85);
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        color: #fcedba;
+        font-size: 11px;
+        padding: 4px 9px;
+        border-radius: 14px;
+        cursor: pointer;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 3px;
       }
 
-      /* 占卜议题输入区 */
-      .intent-container {
-        top: 66px;
-        width: 92vw;
-        gap: 5px;
-      }
-      .intent-box {
-        width: 100%;
-        padding: 5px 12px;
-      }
-      .intent-input {
-        width: 100%;
-        font-size: 12px;
-      }
-      .intent-label {
-        font-size: 12px;
-      }
-      .edit-badge {
-        font-size: 10px;
-        padding: 1px 6px;
-      }
-      .topic-chips {
-        width: 100%;
-        overflow-x: auto;
-        white-space: nowrap;
-        padding-bottom: 4px;
-        justify-content: flex-start;
-        -webkit-overflow-scrolling: touch;
-      }
-      .topic-chips::-webkit-scrollbar {
+      /* 移动端弹窗抽屉 (点击议题或样式时弹出，绝不常驻遮挡) */
+      .mobile-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(6px);
+        z-index: 50;
         display: none;
+        align-items: flex-end;
       }
-      .topic-chip {
-        font-size: 10px;
-        padding: 2px 8px;
-        flex-shrink: 0;
+      .mobile-modal-overlay.open {
+        display: flex;
+      }
+      .mobile-modal-card {
+        width: 100vw;
+        background: rgba(18, 12, 32, 0.96);
+        border-top: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 20px 20px 0 0;
+        padding: 20px 18px env(safe-area-inset-bottom, 20px) 18px;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+      }
+      .modal-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        padding-bottom: 8px;
+      }
+      .modal-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #fcedba;
+      }
+      .modal-card-close {
+        background: transparent;
+        border: none;
+        color: #8f8572;
+        font-size: 20px;
       }
 
-      /* 右上角面板在手机上默认折叠为侧滑抽屉/浮层 */
-      .altar-panel {
-        top: 54px;
-        right: 12px;
-        width: auto;
-        max-width: 92vw;
-        padding: 10px 12px;
-        transform: scale(0);
-        transform-origin: top right;
-        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
-        opacity: 0;
-        pointer-events: none;
-      }
-      .altar-panel.open {
-        transform: scale(1);
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      /* 圣三角指示器插槽在手机端紧凑水平等宽排列 */
+      /* 圣三角牌位插槽指示器 (横向等宽排在下半部) */
       .spread-slots-bar {
         bottom: 64px;
-        width: 94vw;
+        width: calc(100vw - 20px);
+        left: 10px;
+        transform: none;
         gap: 6px;
         justify-content: space-between;
       }
       .slot-indicator {
         flex: 1;
         width: auto;
-        padding: 6px 2px;
+        padding: 5px 2px;
         border-radius: 8px;
       }
-      .slot-tag {
-        font-size: 9px;
-      }
-      .slot-name {
-        font-size: 11px;
-      }
-      .slot-desc {
-        font-size: 10px;
-      }
+      .slot-tag { font-size: 9px; margin-bottom: 1px; }
+      .slot-name { font-size: 11px; }
+      .slot-desc { font-size: 10px; }
 
-      /* 底部操作工具栏在手机端整齐平铺一行 */
+      /* 底部操作工具栏 (横向一行 4 个胶囊，居中紧凑) */
       .toolbar {
-        bottom: 12px;
-        width: 94vw;
-        padding: 6px 8px;
-        gap: 6px;
-        border-radius: 30px;
+        bottom: env(safe-area-inset-bottom, 10px);
+        width: calc(100vw - 20px);
+        left: 10px;
+        transform: none;
+        padding: 5px 8px;
+        gap: 5px;
+        border-radius: 25px;
         justify-content: space-between;
       }
       .btn {
         flex: 1;
         padding: 6px 2px;
-        font-size: 11px;
-        border-radius: 16px;
+        font-size: 11.5px;
+        border-radius: 14px;
         justify-content: center;
         gap: 2px;
-        letter-spacing: 0;
         white-space: nowrap;
       }
 
-      /* 解读长卷面板在手机端变成优雅的底部抽屉 (Bottom Sheet) */
+      /* 解卦长卷在手机上作为底部抽屉 (Bottom Sheet) */
       .reading-scroll {
         top: auto;
         bottom: 0;
         left: 0;
         right: 0;
         width: 100vw;
-        max-height: 80vh;
-        border-radius: 20px 20px 0 0;
-        padding: 20px 18px 24px 18px;
+        max-height: 82vh;
+        border-radius: 22px 22px 0 0;
+        padding: 20px 16px env(safe-area-inset-bottom, 24px) 16px;
         transform: translateY(105%);
       }
       .reading-scroll.open {
         transform: translateY(0);
       }
-      .scroll-title {
-        font-size: 17px;
-      }
-      .scroll-question {
-        font-size: 12px;
-      }
-      .r-card-name {
-        font-size: 14px;
-      }
-      .r-desc {
-        font-size: 12px;
-      }
-      .synthesis-text {
-        font-size: 12px;
-      }
+      .scroll-title { font-size: 17px; }
+      .scroll-question { font-size: 12px; }
     }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
 
-  <header>
+  <!-- PC 宽屏统一流式顶栏 (手机端自动隐藏，结构性杜绝重叠) -->
+  <div class="pc-top-hud">
     <h1>CELESTIAL TAROT</h1>
-    <div class="ritual-status" id="ritual-status">✦ 请心怀所问，点击下方星辰之牌选取第 1 张【过去】 ✦</div>
-  </header>
-
-  <div class="intent-container">
+    <div class="ritual-status" id="ritual-status">✦ 请心怀所问，点击星辰之牌选取第 1 张【过去】 ✦</div>
     <div class="intent-box" onclick="focusIntentInput()">
       <div class="intent-label">🔮 占卜议题:</div>
-      <input type="text" id="intent-input" class="intent-input" placeholder="点击输入心中所问（如：最近换工作合适吗？）" value="我近期的发展态势与破局启示">
-      <div class="edit-badge" title="点击即可修改议题">✏️ 自定义</div>
+      <input type="text" id="intent-input" class="intent-input" placeholder="输入心中所问（如：最近换工作合适吗？）" value="我近期的发展态势与破局启示" oninput="syncTopicToMobile(this.value)">
+      <div class="edit-badge">✏️ 自定义</div>
     </div>
     <div class="topic-chips">
       <span class="topic-chip-label">快捷灵感:</span>
@@ -698,26 +642,7 @@
     </div>
   </div>
 
-  <div class="spread-slots-bar" id="slots-bar">
-    <div class="slot-indicator active" id="slot-0">
-      <div class="slot-tag">POSITION I</div>
-      <div class="slot-name">过去 · 起因</div>
-      <div class="slot-desc">未抽取</div>
-    </div>
-    <div class="slot-indicator" id="slot-1">
-      <div class="slot-tag">POSITION II</div>
-      <div class="slot-name">现在 · 阻碍</div>
-      <div class="slot-desc">未抽取</div>
-    </div>
-    <div class="slot-indicator" id="slot-2">
-      <div class="slot-tag">POSITION III</div>
-      <div class="slot-name">未来 · 启示</div>
-      <div class="slot-desc">未抽取</div>
-    </div>
-  </div>
-
-  <div class="mobile-settings-toggle" onclick="toggleMobileAltarPanel()" title="牌背与星海设置">🎨</div>
-
+  <!-- PC 宽屏右上角面板 (手机端自动隐藏) -->
   <div class="altar-panel" id="altar-panel">
     <div class="panel-row">
       <div class="panel-row-title">牌背样式</div>
@@ -741,14 +666,93 @@
     </div>
   </div>
 
+  <!-- ================= 移动端专属灵动顶栏 (极度精简，释放 3D 视野) ================= -->
+  <div class="mobile-header-bar">
+    <div class="mobile-logo-status">
+      <div class="m-logo">✦ TAROT</div>
+      <div class="m-status-text" id="m-ritual-status">选【过去】</div>
+    </div>
+    <div class="mobile-action-capsules">
+      <div class="m-capsule-btn" onclick="openMobileModal('topic')">🔮 议题</div>
+      <div class="m-capsule-btn" onclick="openMobileModal('theme')">🎨 样式</div>
+    </div>
+  </div>
+
+  <!-- 移动端议题设置弹窗 -->
+  <div class="mobile-modal-overlay" id="modal-topic" onclick="closeMobileModals(event)">
+    <div class="mobile-modal-card" onclick="event.stopPropagation()">
+      <div class="modal-card-header">
+        <div class="modal-card-title">🔮 设定本次占卜议题</div>
+        <button class="modal-card-close" onclick="closeAllModals()">×</button>
+      </div>
+      <div style="background: rgba(28,20,48,0.6); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(212,175,55,0.3); margin-bottom: 12px;">
+        <input type="text" id="m-intent-input" style="width: 100%; background: transparent; border: none; color: #fff; font-size: 13.5px; outline: none; font-family: inherit;" placeholder="输入你想问的问题" value="我近期的发展态势与破局启示" oninput="syncTopicToPC(this.value)">
+      </div>
+      <div style="font-size: 11px; color: #d4af37; margin-bottom: 8px;">快捷灵感点选：</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+        <div class="topic-chip" onclick="setTopic('💼 近期职场发展与瓶颈突破'); closeAllModals();">💼 职场发展</div>
+        <div class="topic-chip" onclick="setTopic('❤️ 情感关系的深层因果与走向'); closeAllModals();">❤️ 情感关系</div>
+        <div class="topic-chip" onclick="setTopic('🌟 个人成长中的迷茫与内在心结'); closeAllModals();">🌟 个人心结</div>
+        <div class="topic-chip" onclick="setTopic('✨ 今日运势与灵性启示'); closeAllModals();">✨ 今日运势</div>
+      </div>
+      <button class="ai-connect-btn" onclick="closeAllModals()">确定并开始占卜</button>
+    </div>
+  </div>
+
+  <!-- 移动端样式/牌背弹窗 -->
+  <div class="mobile-modal-overlay" id="modal-theme" onclick="closeMobileModals(event)">
+    <div class="mobile-modal-card" onclick="event.stopPropagation()">
+      <div class="modal-card-header">
+        <div class="modal-card-title">🎨 牌背与星海天象</div>
+        <button class="modal-card-close" onclick="closeAllModals()">×</button>
+      </div>
+      <div style="font-size: 12px; color: #d4af37; margin-bottom: 8px;">选择卡牌牌背：</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <div class="back-btn active" style="width: 26px; height: 36px; background-image: url('./textures/backs/bm4.webp');" onclick="changeDeckBack('bm4', this)"></div>
+        <div class="back-btn" style="width: 26px; height: 36px; background-image: url('./textures/backs/bm3.webp');" onclick="changeDeckBack('bm3', this)"></div>
+        <div class="back-btn" style="width: 26px; height: 36px; background-image: url('./textures/backs/bm2.webp');" onclick="changeDeckBack('bm2', this)"></div>
+        <div class="back-btn" style="width: 26px; height: 36px; background-image: url('./textures/backs/bm.webp');" onclick="changeDeckBack('bm', this)"></div>
+        <div class="back-btn" id="m-btn-metatron" style="width: 26px; height: 36px;" onclick="changeDeckBack('metatron', this)"></div>
+        <div class="back-btn" id="m-btn-ouroboros" style="width: 26px; height: 36px;" onclick="changeDeckBack('ouroboros', this)"></div>
+      </div>
+      <div style="font-size: 12px; color: #d4af37; margin-bottom: 8px;">选择星海天色：</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;">
+        <div class="theme-chip active" onclick="setCosmicTheme('purple', this); closeAllModals();">🌌 紫金星云</div>
+        <div class="theme-chip" onclick="setCosmicTheme('blue', this); closeAllModals();">🌠 蓝夜银河</div>
+        <div class="theme-chip" onclick="setCosmicTheme('gold', this); closeAllModals();">✨ 暖金星芒</div>
+        <div class="theme-chip" onclick="setCosmicTheme('dark', this); closeAllModals();">🌑 纯净虚空</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 圣三角牌位插槽指示器 (双端共用) -->
+  <div class="spread-slots-bar" id="slots-bar">
+    <div class="slot-indicator active" id="slot-0">
+      <div class="slot-tag">POSITION I</div>
+      <div class="slot-name">过去 · 起因</div>
+      <div class="slot-desc">未抽取</div>
+    </div>
+    <div class="slot-indicator" id="slot-1">
+      <div class="slot-tag">POSITION II</div>
+      <div class="slot-name">现在 · 阻碍</div>
+      <div class="slot-desc">未抽取</div>
+    </div>
+    <div class="slot-indicator" id="slot-2">
+      <div class="slot-tag">POSITION III</div>
+      <div class="slot-name">未来 · 启示</div>
+      <div class="slot-desc">未抽取</div>
+    </div>
+  </div>
+
+  <!-- 底部操作工具栏 (双端共用，紧凑胶囊) -->
   <div class="toolbar">
-    <button class="btn" onclick="toggleLayout()"><span id="layout-icon">🌌</span> <span id="layout-text">拱门</span></button>
+    <button class="btn" onclick="toggleLayout()"><span id="layout-icon">🌌</span> <span id="layout-text">阵型</span></button>
     <button class="btn" onclick="shuffleDeck()">💫 洗牌</button>
-    <button class="btn" onclick="autoDrawThree()">✨ 一键三抽</button>
+    <button class="btn" onclick="autoDrawThree()">✨ 三抽</button>
     <button class="btn primary" onclick="resetRitual()">🔄 重置</button>
   </div>
 
-  <!-- 圣三角综合解盘报告长卷 -->
+  <!-- 圣三角综合解盘报告长卷 (PC 为右侧卷轴，手机为优雅抽屉) -->
   <div class="reading-scroll" id="reading-scroll">
     <button class="scroll-close" onclick="closeScroll()">×</button>
     <div class="scroll-header">
@@ -764,10 +768,9 @@
     </div>
 
     <div class="ai-btn-box">
-      <button class="ai-connect-btn" onclick="copyPromptForAI()">
+      <button class="ai-connect-btn" onclick="copyReadingRecord()">
         <span>📜 复制神谕命盘卦辞</span>
       </button>
-      <div class="ai-tip">点击可将当前牌面、正逆位与综合断语复制至剪贴板，方便存档或研读。</div>
     </div>
   </div>
 
@@ -800,147 +803,77 @@
       { id: 21, n: "世界", en: "The World", u: "圆满达成、大同圆融、愿景实现、自由畅行。旅程终章亦是更高维度的序曲。", r: "功亏一篑、缺乏收尾决断、旅途延宕、未能圆融贯通。" }
     ];
 
-    // --- 3D 核心配置与神秘学资产 ---
+    // --- 3D 核心配置 ---
     let scene, camera, renderer, raycaster, mouse;
     let cards = [];
     const CARD_W = 2.2;
     const CARD_H = 3.8;
     const CARD_D = 0.055;
-    let currentBackKey = 'bm4';
     let textureLoader;
     let cardSharedBackMat, goldEdgeMat;
     let hoveredCard = null;
     let isInteracting = false;
-    let ambientLight, spotLight, bluePoint, goldPoint, altarClothMesh, starParticles;
+    let ambientLight, spotLight, bluePoint, goldPoint;
     let metatronTexture, ouroborosTexture;
-    const altarClothCache = {};
 
-    // 牌阵模式：'constellation' (星罗棋布) | 'arch' (经典拱门)
     let currentLayoutMode = 'constellation';
-
-    // 圣三角牌阵状态
     const drawnSlots = [null, null, null];
     let currentSlotIndex = 0;
 
-    // 3D 牌桌上 3 个圣三角卡牌底座位置
+    // 圣三角 3D 槽位目标坐标
     const SPREAD_TARGET_POSITIONS = [
-      { x: -3.4, y: -0.6, z: 4.8 }, // 过去
-      { x: 0.0,  y: -0.6, z: 5.2 }, // 现在
-      { x: 3.4,  y: -0.6, z: 4.8 }  // 未来
+      { x: -3.4, y: -0.6, z: 4.8 },
+      { x: 0.0,  y: -0.6, z: 5.2 },
+      { x: 3.4,  y: -0.6, z: 4.8 }
     ];
 
-    // --- 神圣几何与神秘学程序化纹理引擎 ---
+    // 程序化绘制麦达昶神圣几何牌背
     function generateMetatronCanvas() {
       const c = document.createElement('canvas');
-      c.width = 512;
-      c.height = 896;
+      c.width = 512; c.height = 896;
       const ctx = c.getContext('2d');
-
-      // 深曜石黑底
-      ctx.fillStyle = '#0a0812';
-      ctx.fillRect(0, 0, c.width, c.height);
-
-      // 双层烫金边框
-      ctx.strokeStyle = '#d4af37';
-      ctx.lineWidth = 4;
+      ctx.fillStyle = '#0a0812'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 4;
       ctx.strokeRect(18, 18, c.width - 36, c.height - 36);
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(26, 26, c.width - 52, c.height - 52);
-
-      const cx = c.width / 2;
-      const cy = c.height / 2;
-
-      // 麦达昶立方体核心节点
-      const r = 90;
+      const cx = c.width / 2, cy = c.height / 2, r = 90;
       const nodes = [{ x: cx, y: cy }];
       for (let i = 0; i < 6; i++) {
         const a = (i * Math.PI) / 3;
         nodes.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
         nodes.push({ x: cx + Math.cos(a) * r * 2, y: cy + Math.sin(a) * r * 2 });
       }
-
-      // 绘制所有节点之间的神圣连线
-      ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)'; ctx.lineWidth = 1.2;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          ctx.beginPath();
-          ctx.moveTo(nodes[i].x, nodes[i].y);
-          ctx.lineTo(nodes[j].x, nodes[j].y);
-          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.stroke();
         }
       }
-
-      // 绘制 13 个同心圆环
       nodes.forEach(n => {
-        ctx.beginPath();
-        ctx.arc(n.x, n.y, 22, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(18, 12, 28, 0.8)';
-        ctx.fill();
-        ctx.strokeStyle = '#fcedba';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(n.x, n.y, 22, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(18, 12, 28, 0.8)'; ctx.fill();
+        ctx.strokeStyle = '#fcedba'; ctx.lineWidth = 2; ctx.stroke();
       });
-
       return c;
     }
 
     function generateOuroborosCanvas() {
       const c = document.createElement('canvas');
-      c.width = 512;
-      c.height = 896;
+      c.width = 512; c.height = 896;
       const ctx = c.getContext('2d');
-
-      ctx.fillStyle = '#0d0610';
-      ctx.fillRect(0, 0, c.width, c.height);
-
-      // 装饰花边
-      ctx.strokeStyle = '#d4af37';
-      ctx.lineWidth = 3;
+      ctx.fillStyle = '#0d0610'; ctx.fillRect(0, 0, c.width, c.height);
+      ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 3;
       ctx.strokeRect(18, 18, c.width - 36, c.height - 36);
-
-      const cx = c.width / 2;
-      const cy = c.height / 2;
-
-      // 衔尾蛇环 (Ouroboros Ring)
-      ctx.beginPath();
-      ctx.arc(cx, cy, 140, 0, Math.PI * 2);
-      ctx.strokeStyle = '#d4af37';
-      ctx.lineWidth = 8;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, 120, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // 全知之眼放射光芒
+      const cx = c.width / 2, cy = c.height / 2;
+      ctx.beginPath(); ctx.arc(cx, cy, 140, 0, Math.PI * 2);
+      ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 7; ctx.stroke();
       for (let i = 0; i < 24; i++) {
         const a = (i * Math.PI) / 12;
-        ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(a) * 35, cy + Math.sin(a) * 35);
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * 35, cy + Math.sin(a) * 35);
         ctx.lineTo(cx + Math.cos(a) * 95, cy + Math.sin(a) * 95);
-        ctx.strokeStyle = i % 2 === 0 ? 'rgba(252, 237, 186, 0.7)' : 'rgba(212, 175, 55, 0.35)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        ctx.strokeStyle = 'rgba(252, 237, 186, 0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
       }
-
-      // 三角形与中心之眼
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - 65);
-      ctx.lineTo(cx + 60, cy + 40);
-      ctx.lineTo(cx - 60, cy + 40);
-      ctx.closePath();
-      ctx.strokeStyle = '#fcedba';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-      ctx.fillStyle = '#fcedba';
-      ctx.fill();
-
+      ctx.beginPath(); ctx.moveTo(cx, cy - 65); ctx.lineTo(cx + 60, cy + 40); ctx.lineTo(cx - 60, cy + 40); ctx.closePath();
+      ctx.strokeStyle = '#fcedba'; ctx.lineWidth = 3; ctx.stroke();
       return c;
     }
 
@@ -959,8 +892,6 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.2;
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
       textureLoader = new THREE.TextureLoader();
@@ -969,7 +900,7 @@
 
       setupLights();
       setupMaterials();
-      updateCameraAspect();
+      updateCameraResponsive();
       createStarNebula();
       createSlotRings();
       createCards();
@@ -982,61 +913,104 @@
       animate();
     }
 
-    // 灯光
     function setupLights() {
       ambientLight = new THREE.AmbientLight(0xdcd0ea, 0.75);
       scene.add(ambientLight);
-
-      spotLight = new THREE.SpotLight(0xfff0d8, 3.2, 35, Math.PI / 3.8, 0.35, 1);
+      spotLight = new THREE.SpotLight(0xfff0d8, 3.2, 45, Math.PI / 3.8, 0.35, 1);
       spotLight.position.set(0, 11, 9);
-      spotLight.castShadow = true;
       scene.add(spotLight);
-
-      bluePoint = new THREE.PointLight(0x6545a4, 2.0, 25);
+      bluePoint = new THREE.PointLight(0x6545a4, 2.0, 30);
       bluePoint.position.set(-11, 5, 2);
       scene.add(bluePoint);
-
-      goldPoint = new THREE.PointLight(0xd4af37, 2.0, 25);
+      goldPoint = new THREE.PointLight(0xd4af37, 2.0, 30);
       goldPoint.position.set(11, 5, 2);
       scene.add(goldPoint);
     }
 
-    // 材质
     function setupMaterials() {
       goldEdgeMat = new THREE.MeshStandardMaterial({
-        color: 0xd4af37,
-        metalness: 0.88,
-        roughness: 0.25
+        color: 0xd4af37, metalness: 0.88, roughness: 0.25
       });
-
-      // 默认初始牌背
       const backTexture = textureLoader.load('./textures/backs/bm4.webp');
       backTexture.generateMipmaps = true;
       cardSharedBackMat = new THREE.MeshStandardMaterial({
-        map: backTexture,
-        roughness: 0.35,
-        metalness: 0.22
+        map: backTexture, roughness: 0.35, metalness: 0.22
       });
 
-      // 预生成程序化神圣几何牌背纹理
       const metatronCanvas = generateMetatronCanvas();
       metatronTexture = new THREE.CanvasTexture(metatronCanvas);
-      document.getElementById('btn-metatron').style.backgroundImage = `url(${metatronCanvas.toDataURL()})`;
+      const mUrl = metatronCanvas.toDataURL();
+      const b1 = document.getElementById('btn-metatron');
+      if (b1) b1.style.backgroundImage = `url(${mUrl})`;
+      const b2 = document.getElementById('m-btn-metatron');
+      if (b2) b2.style.backgroundImage = `url(${mUrl})`;
 
       const ouroborosCanvas = generateOuroborosCanvas();
       ouroborosTexture = new THREE.CanvasTexture(ouroborosCanvas);
-      document.getElementById('btn-ouroboros').style.backgroundImage = `url(${ouroborosCanvas.toDataURL()})`;
+      const oUrl = ouroborosCanvas.toDataURL();
+      const o1 = document.getElementById('btn-ouroboros');
+      if (o1) o1.style.backgroundImage = `url(${oUrl})`;
+      const o2 = document.getElementById('m-btn-ouroboros');
+      if (o2) o2.style.backgroundImage = `url(${oUrl})`;
     }
 
-    // 牌桌上的 3 个神圣几何光环底座 (Slot Rings)
+    // 核心：基于数学视场角精确自适应手机与电脑屏幕
+    function updateCameraResponsive() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const aspect = w / h;
+      camera.aspect = aspect;
+
+      if (aspect < 0.88) {
+        // 手机竖屏状态：利用水平视场公式动态后移相机，让 22 张星宿牌阵在屏幕中央比例协调优雅！
+        camera.fov = 54;
+        const targetZ = Math.min(32, Math.max(20, 12.8 / aspect));
+        camera.position.set(0, 4.0, targetZ);
+
+        // 圣三角 3D 槽位在竖屏下收拢
+        SPREAD_TARGET_POSITIONS[0].x = -2.1;
+        SPREAD_TARGET_POSITIONS[0].y = -1.2;
+        SPREAD_TARGET_POSITIONS[0].z = 6.2;
+
+        SPREAD_TARGET_POSITIONS[1].x = 0.0;
+        SPREAD_TARGET_POSITIONS[1].y = -1.2;
+        SPREAD_TARGET_POSITIONS[1].z = 6.5;
+
+        SPREAD_TARGET_POSITIONS[2].x = 2.1;
+        SPREAD_TARGET_POSITIONS[2].y = -1.2;
+        SPREAD_TARGET_POSITIONS[2].z = 6.2;
+      } else {
+        // 电脑或平板横屏
+        camera.fov = 45;
+        camera.position.set(0, 3.8, 14.5);
+
+        SPREAD_TARGET_POSITIONS[0].x = -3.4;
+        SPREAD_TARGET_POSITIONS[0].y = -0.6;
+        SPREAD_TARGET_POSITIONS[0].z = 4.8;
+
+        SPREAD_TARGET_POSITIONS[1].x = 0.0;
+        SPREAD_TARGET_POSITIONS[1].y = -0.6;
+        SPREAD_TARGET_POSITIONS[1].z = 5.2;
+
+        SPREAD_TARGET_POSITIONS[2].x = 3.4;
+        SPREAD_TARGET_POSITIONS[2].y = -0.6;
+        SPREAD_TARGET_POSITIONS[2].z = 4.8;
+      }
+
+      camera.updateProjectionMatrix();
+      camera.lookAt(0, 0, 0);
+      renderer.setSize(w, h);
+    }
+
+    function onWindowResize() {
+      updateCameraResponsive();
+    }
+
     function createSlotRings() {
-      SPREAD_TARGET_POSITIONS.forEach((pos, idx) => {
-        const ringGeo = new THREE.RingGeometry(1.4, 1.48, 48);
+      SPREAD_TARGET_POSITIONS.forEach((pos) => {
+        const ringGeo = new THREE.RingGeometry(1.3, 1.38, 48);
         const ringMat = new THREE.MeshBasicMaterial({
-          color: 0xd4af37,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.35
+          color: 0xd4af37, side: THREE.DoubleSide, transparent: true, opacity: 0.35
         });
         const ring = new THREE.Mesh(ringGeo, ringMat);
         ring.rotation.x = Math.PI / 2;
@@ -1045,9 +1019,8 @@
       });
     }
 
-    // 浪漫浩瀚的星宿粒子天河 (Star Nebula)
     function createStarNebula() {
-      const count = 600;
+      const count = 550;
       const geo = new THREE.BufferGeometry();
       const pos = new Float32Array(count * 3);
       const cols = new Float32Array(count * 3);
@@ -1056,116 +1029,67 @@
         pos[i * 3] = (Math.random() - 0.5) * 50;
         pos[i * 3 + 1] = (Math.random() - 0.5) * 30 + 2;
         pos[i * 3 + 2] = (Math.random() - 0.5) * 35 - 3;
-
         const isGold = Math.random() > 0.45;
         cols[i * 3] = isGold ? 0.98 : 0.65;
         cols[i * 3 + 1] = isGold ? 0.85 : 0.6;
         cols[i * 3 + 2] = isGold ? 0.45 : 0.98;
       }
-
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-
-      const mat = new THREE.PointsMaterial({
-        size: 0.14,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.75
-      });
+      const mat = new THREE.PointsMaterial({ size: 0.14, vertexColors: true, transparent: true, opacity: 0.75 });
       scene.add(new THREE.Points(geo, mat));
     }
 
-    // 创建 22 张卡牌
     function createCards() {
       const cardGeo = new THREE.BoxGeometry(CARD_W, CARD_H, CARD_D);
-
       for (let i = 0; i < 22; i++) {
         const frontTexture = textureLoader.load(`./textures/cards/${i}.webp`);
         frontTexture.generateMipmaps = true;
-
-        const frontMat = new THREE.MeshStandardMaterial({
-          map: frontTexture,
-          roughness: 0.36,
-          metalness: 0.12
-        });
-
-        const materials = [
-          goldEdgeMat,       // +X
-          goldEdgeMat,       // -X
-          goldEdgeMat,       // +Y
-          goldEdgeMat,       // -Y
-          frontMat,          // +Z 牌面
-          cardSharedBackMat  // -Z 牌背
-        ];
-
+        const frontMat = new THREE.MeshStandardMaterial({ map: frontTexture, roughness: 0.36, metalness: 0.12 });
+        const materials = [goldEdgeMat, goldEdgeMat, goldEdgeMat, goldEdgeMat, frontMat, cardSharedBackMat];
         const mesh = new THREE.Mesh(cardGeo, materials);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        mesh.castShadow = true; mesh.receiveShadow = true;
         mesh.userData = {
-          id: i,
-          info: TAROT_CARDS[i],
-          isDrawn: false,
-          slotIndex: -1,
-          isReversed: false,
-          homePos: { x: 0, y: 0, z: 0 },
-          homeRot: { x: 0, y: 0, z: 0 },
-          floatOffset: Math.random() * Math.PI * 2,
-          floatSpeed: 0.8 + Math.random() * 0.6
+          id: i, info: TAROT_CARDS[i], isDrawn: false, slotIndex: -1, isReversed: false,
+          homePos: { x: 0, y: 0, z: 0 }, homeRot: { x: 0, y: 0, z: 0 },
+          floatOffset: Math.random() * Math.PI * 2, floatSpeed: 0.8 + Math.random() * 0.6
         };
-
         scene.add(mesh);
         cards.push(mesh);
       }
-
       applyLayout(false);
     }
 
-    // --- 两种核心布局算法 ---
-    // 1. 【星罗棋布 (Constellation Spread)】：像散落天穹的星座星宿，高低俯仰错落悬浮
-    // 2. 【经典拱门 (Arch Spread)】：半月形仪轨拱门
     function calculatePositions() {
       const count = cards.length;
-
       if (currentLayoutMode === 'constellation') {
-        // 双层椭圆天体星宿分布
         cards.forEach((card, i) => {
           if (card.userData.isDrawn) return;
-
-          // 黄金角发散分布
-          const phi = i * 2.39996; // 黄金螺旋角
-          const r = 3.6 + Math.sqrt(i) * 1.55; 
-
+          const phi = i * 2.39996;
+          const r = 3.6 + Math.sqrt(i) * 1.55;
           const tx = Math.sin(phi) * r * 1.45;
           const ty = 1.0 + Math.cos(phi * 2.1) * 1.6 + (i % 3) * 0.4;
           const tz = -Math.cos(phi) * 3.8 - 0.5 + (i % 4) * 0.5;
-
-          // 背面朝向镜头：rotY 基础为 Math.PI，加上星辰自身微角度
           const rx = -0.15 + Math.sin(i * 1.7) * 0.18;
           const ry = Math.PI - (tx / 15) * 0.6 + Math.cos(i) * 0.15;
           const rz = (Math.random() - 0.5) * 0.25;
-
           card.userData.homePos = { x: tx, y: ty, z: tz };
           card.userData.homeRot = { x: rx, y: ry, z: rz };
         });
       } else {
-        // 经典拱门排列
         const radius = 8.2;
         const angleSpread = Math.PI * 0.76;
         const startAngle = -angleSpread / 2;
-
         cards.forEach((card, i) => {
           if (card.userData.isDrawn) return;
           const progress = i / (count - 1);
           const angle = startAngle + progress * angleSpread;
-
           const tx = Math.sin(angle) * radius;
           const tz = -Math.cos(angle) * (radius * 0.45) + 0.5;
           const ty = 1.2 + Math.sin(progress * Math.PI) * 0.6;
-
           const rx = -0.12;
           const ry = -angle * 0.85 + Math.PI;
           const rz = angle * 0.22;
-
           card.userData.homePos = { x: tx, y: ty, z: tz };
           card.userData.homeRot = { x: rx, y: ry, z: rz };
         });
@@ -1174,20 +1098,11 @@
 
     function applyLayout(animateIt = true) {
       calculatePositions();
-
       cards.forEach((card, index) => {
         if (card.userData.isDrawn) return;
-
         if (animateIt) {
-          new TWEEN.Tween(card.position)
-            .to(card.userData.homePos, 900 + index * 20)
-            .easing(TWEEN.Easing.Cubic.Out)
-            .start();
-
-          new TWEEN.Tween(card.rotation)
-            .to(card.userData.homeRot, 900 + index * 20)
-            .easing(TWEEN.Easing.Cubic.Out)
-            .start();
+          new TWEEN.Tween(card.position).to(card.userData.homePos, 900 + index * 20).easing(TWEEN.Easing.Cubic.Out).start();
+          new TWEEN.Tween(card.rotation).to(card.userData.homeRot, 900 + index * 20).easing(TWEEN.Easing.Cubic.Out).start();
         } else {
           card.position.set(card.userData.homePos.x, card.userData.homePos.y, card.userData.homePos.z);
           card.rotation.set(card.userData.homeRot.x, card.userData.homeRot.y, card.userData.homeRot.z);
@@ -1195,151 +1110,95 @@
       });
     }
 
-    // 聚焦与修改占卜议题
-    window.focusIntentInput = function() {
-      const input = document.getElementById('intent-input');
-      input.focus();
-      input.select();
-    };
-
-    window.setTopic = function(topicText) {
-      const input = document.getElementById('intent-input');
-      input.value = topicText;
-      const box = document.querySelector('.intent-box');
-      box.style.borderColor = '#fcedba';
-      box.style.boxShadow = '0 0 25px rgba(212, 175, 55, 0.7)';
-      setTimeout(() => {
-        box.style.borderColor = '';
-        box.style.boxShadow = '';
-      }, 600);
-    };
-
-    // 切换布局模式
     window.toggleLayout = function() {
       if (isInteracting) return;
       currentLayoutMode = currentLayoutMode === 'constellation' ? 'arch' : 'constellation';
       document.getElementById('layout-icon').innerText = currentLayoutMode === 'constellation' ? '🌌' : '🎪';
-      document.getElementById('layout-text').innerText = currentLayoutMode === 'constellation' ? '切换为拱门牌阵' : '切换为星罗棋布';
       applyLayout(true);
     };
 
-    // 切换牌背样式 (支持静态 WebP 和动态程序化神圣几何纹理)
     window.changeDeckBack = function(key, btnElem) {
-      currentBackKey = key;
       if (key === 'metatron') {
         cardSharedBackMat.map = metatronTexture;
       } else if (key === 'ouroboros') {
         cardSharedBackMat.map = ouroborosTexture;
       } else {
-        const tex = textureLoader.load(`./textures/backs/${key}.webp`);
-        cardSharedBackMat.map = tex;
+        cardSharedBackMat.map = textureLoader.load(`./textures/backs/${key}.webp`);
       }
       cardSharedBackMat.needsUpdate = true;
       document.querySelectorAll('.back-btn').forEach(b => b.classList.remove('active'));
       if (btnElem) btnElem.classList.add('active');
     };
 
-    // 切换背后纯粹的宇宙深空星海天象 (绝无任何阻挡视线的桌子)
     window.setCosmicTheme = function(theme, chipElem) {
       document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('active'));
       if (chipElem) chipElem.classList.add('active');
 
       if (theme === 'purple') {
-        // 紫金星云 (经典深邃)
         document.body.style.background = 'radial-gradient(circle at 50% 30%, #150f28 0%, #080614 60%, #020106 100%)';
         scene.fog.color.setHex(0x080614);
         ambientLight.color.setHex(0xdcd0ea);
         spotLight.color.setHex(0xfff0d8);
-        spotLight.intensity = 3.2;
         bluePoint.color.setHex(0x6545a4);
         goldPoint.color.setHex(0xd4af37);
       } else if (theme === 'blue') {
-        // 蓝夜银河 (清冷浩瀚)
         document.body.style.background = 'radial-gradient(circle at 50% 30%, #0d1a33 0%, #050b18 60%, #01040a 100%)';
         scene.fog.color.setHex(0x050b18);
         ambientLight.color.setHex(0xbcd4ea);
         spotLight.color.setHex(0xe8f2ff);
-        spotLight.intensity = 3.0;
         bluePoint.color.setHex(0x2868b0);
         goldPoint.color.setHex(0x88c0d0);
       } else if (theme === 'gold') {
-        // 暖金星芒 (神圣拂晓)
         document.body.style.background = 'radial-gradient(circle at 50% 30%, #26190a 0%, #110a04 60%, #040201 100%)';
         scene.fog.color.setHex(0x110a04);
         ambientLight.color.setHex(0xead8be);
         spotLight.color.setHex(0xfff0d0);
-        spotLight.intensity = 3.4;
         bluePoint.color.setHex(0x9a5820);
         goldPoint.color.setHex(0xe8b835);
       } else if (theme === 'dark') {
-        // 纯净虚空 (极致黑夜)
         document.body.style.background = 'radial-gradient(circle at 50% 30%, #0e0d14 0%, #050408 60%, #000002 100%)';
         scene.fog.color.setHex(0x050408);
         ambientLight.color.setHex(0x8a8494);
         spotLight.color.setHex(0xffffff);
-        spotLight.intensity = 2.8;
         bluePoint.color.setHex(0x3a3048);
         goldPoint.color.setHex(0xbaa050);
       }
     };
 
-    // 洗牌逻辑
     window.shuffleDeck = function() {
       if (isInteracting) return;
       isInteracting = true;
       closeScroll();
       TWEEN.removeAll();
 
-      // 先收拢成星核
       cards.forEach((card, idx) => {
         if (card.userData.isDrawn) return;
-        new TWEEN.Tween(card.position)
-          .to({ x: 0, y: 1.5 + idx * 0.015, z: -1 }, 500)
-          .easing(TWEEN.Easing.Quadratic.InOut)
-          .start();
-
-        new TWEEN.Tween(card.rotation)
-          .to({ x: Math.PI / 2, y: 0, z: 0 }, 500)
-          .easing(TWEEN.Easing.Quadratic.InOut)
-          .start();
+        new TWEEN.Tween(card.position).to({ x: 0, y: 1.5 + idx * 0.015, z: -1 }, 500).easing(TWEEN.Easing.Quadratic.InOut).start();
+        new TWEEN.Tween(card.rotation).to({ x: Math.PI / 2, y: 0, z: 0 }, 500).easing(TWEEN.Easing.Quadratic.InOut).start();
       });
 
       setTimeout(() => {
-        // 洗牌算法乱序
         for (let i = cards.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          const temp = cards[i];
-          cards[i] = cards[j];
-          cards[j] = temp;
+          const temp = cards[i]; cards[i] = cards[j]; cards[j] = temp;
         }
         applyLayout(true);
-        setTimeout(() => {
-          isInteracting = false;
-        }, 1100);
+        setTimeout(() => { isInteracting = false; }, 1100);
       }, 650);
     };
 
-    // 重启整个圣三角仪式
     window.resetRitual = function() {
       if (isInteracting) return;
       closeScroll();
       TWEEN.removeAll();
-      drawnSlots[0] = null;
-      drawnSlots[1] = null;
-      drawnSlots[2] = null;
+      drawnSlots[0] = null; drawnSlots[1] = null; drawnSlots[2] = null;
       currentSlotIndex = 0;
-
-      cards.forEach(card => {
-        card.userData.isDrawn = false;
-        card.userData.slotIndex = -1;
-      });
-
+      cards.forEach(card => { card.userData.isDrawn = false; card.userData.slotIndex = -1; });
       updateSlotIndicators();
       updateStatusHeader();
       applyLayout(true);
     };
 
-    // 核心：点击抽取卡牌放入圣三角指定槽位
     function drawCardToSlot(card, slotIdx) {
       if (isInteracting || slotIdx > 2) return;
       isInteracting = true;
@@ -1352,48 +1211,27 @@
       card.userData.isReversed = isReversed;
 
       const targetPos = SPREAD_TARGET_POSITIONS[slotIdx];
-      // 翻转到正面朝向镜头：y = 0，逆位 z = Math.PI
-      const targetRot = {
-        x: -0.1,
-        y: 0,
-        z: isReversed ? Math.PI : 0
-      };
+      const targetRot = { x: -0.1, y: 0, z: isReversed ? Math.PI : 0 };
 
-      // 拔高悬浮再稳稳落入底座
       new TWEEN.Tween(card.position)
-        .to({ x: targetPos.x * 0.7, y: 3.2, z: 2.5 }, 400)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .chain(
-          new TWEEN.Tween(card.position)
-            .to(targetPos, 700)
-            .easing(TWEEN.Easing.Cubic.Out)
-        )
+        .to({ x: targetPos.x * 0.7, y: 3.2, z: 2.5 }, 400).easing(TWEEN.Easing.Quadratic.Out)
+        .chain(new TWEEN.Tween(card.position).to(targetPos, 700).easing(TWEEN.Easing.Cubic.Out))
         .start();
 
-      // 翻转动画
       new TWEEN.Tween(card.rotation)
-        .to({ x: -0.3, y: Math.PI * 0.5, z: (isReversed ? Math.PI : 0) * 0.5 }, 400)
-        .easing(TWEEN.Easing.Quadratic.In)
-        .chain(
-          new TWEEN.Tween(card.rotation)
-            .to(targetRot, 700)
-            .easing(TWEEN.Easing.Cubic.Out)
-            .onComplete(() => {
-              isInteracting = false;
-              currentSlotIndex++;
-              updateSlotIndicators();
-              updateStatusHeader();
-
-              // 如果 3 张牌全部抽齐，自动揭幕综合解读长卷！
-              if (currentSlotIndex === 3) {
-                setTimeout(revealFullSpreadReport, 700);
-              }
-            })
-        )
+        .to({ x: -0.3, y: Math.PI * 0.5, z: (isReversed ? Math.PI : 0) * 0.5 }, 400).easing(TWEEN.Easing.Quadratic.In)
+        .chain(new TWEEN.Tween(card.rotation).to(targetRot, 700).easing(TWEEN.Easing.Cubic.Out).onComplete(() => {
+          isInteracting = false;
+          currentSlotIndex++;
+          updateSlotIndicators();
+          updateStatusHeader();
+          if (currentSlotIndex === 3) {
+            setTimeout(revealFullSpreadReport, 650);
+          }
+        }))
         .start();
     }
 
-    // 一键三抽
     window.autoDrawThree = function() {
       if (isInteracting) return;
       if (currentSlotIndex >= 3) {
@@ -1401,21 +1239,17 @@
         setTimeout(autoDrawThree, 800);
         return;
       }
-
       function drawNext() {
         if (currentSlotIndex >= 3) return;
         const available = cards.filter(c => !c.userData.isDrawn);
         if (available.length === 0) return;
         const pick = available[Math.floor(Math.random() * available.length)];
         drawCardToSlot(pick, currentSlotIndex);
-        if (currentSlotIndex < 2) {
-          setTimeout(drawNext, 1200);
-        }
+        if (currentSlotIndex < 2) setTimeout(drawNext, 1200);
       }
       drawNext();
     };
 
-    // 更新槽位指示条 UI
     function updateSlotIndicators() {
       for (let i = 0; i < 3; i++) {
         const slotEl = document.getElementById(`slot-${i}`);
@@ -1426,32 +1260,31 @@
           slotEl.querySelector('.slot-desc').innerText = `${c.userData.info.n} (${c.userData.isReversed ? '逆' : '正'})`;
         } else if (i === currentSlotIndex) {
           slotEl.classList.add('active');
-          slotEl.querySelector('.slot-desc').innerText = '等待选取...';
+          slotEl.querySelector('.slot-desc').innerText = '待选...';
         } else {
-          slotEl.querySelector('.slot-desc').innerText = '未抽取';
+          slotEl.querySelector('.slot-desc').innerText = '未抽';
         }
       }
     }
 
-    // 更新顶部状态文字
     function updateStatusHeader() {
       const headerEl = document.getElementById('ritual-status');
-      const names = ['【过去 · 起因】', '【现在 · 阻碍】', '【未来 · 启示】'];
+      const mHeaderEl = document.getElementById('m-ritual-status');
+      const names = ['【过去】', '【现在】', '【未来】'];
       if (currentSlotIndex < 3) {
-        headerEl.innerText = `✦ 请心怀所问，点击星海中的任意一张牌选取 ${names[currentSlotIndex]} ✦`;
+        if (headerEl) headerEl.innerText = `✦ 请心怀所问，点击星海中的任意一张牌选取 ${names[currentSlotIndex]} ✦`;
+        if (mHeaderEl) mHeaderEl.innerText = `选 ${names[currentSlotIndex]}`;
       } else {
-        headerEl.innerText = `✦ 圣三角星轨契约已成，请参悟综合启示录 ✦`;
+        if (headerEl) headerEl.innerText = `✦ 圣三角星轨契约已成，请参悟综合启示录 ✦`;
+        if (mHeaderEl) mHeaderEl.innerText = `卦象已成`;
       }
     }
 
-    // 展开综合解盘长卷报告
     function revealFullSpreadReport() {
       const q = document.getElementById('intent-input').value.trim() || '我的近期发展与破局启示';
-      document.getElementById('report-question').innerText = `所问议题：${q}`;
-
+      document.getElementById('report-question').innerText = `议题：${q}`;
       const container = document.getElementById('report-cards-container');
       container.innerHTML = '';
-
       const slotLabels = ['I. 过去 · 起因与根基', 'II. 现在 · 现状与核心阻碍', 'III. 未来 · 演化趋势与指引'];
 
       drawnSlots.forEach((card, idx) => {
@@ -1463,25 +1296,20 @@
           <div class="r-slot-label">${slotLabels[idx]}</div>
           <div class="r-card-name">
             <span>${info.id}. ${info.n} (${info.en})</span>
-            <span class="r-tag ${isRev ? 'reversed' : 'upright'}">${isRev ? '逆位 ✦ 能量受阻/偏离' : '正位 ✦ 顺畅显化'}</span>
+            <span class="r-tag ${isRev ? 'reversed' : 'upright'}">${isRev ? '逆位 ✦ 受阻' : '正位 ✦ 顺畅'}</span>
           </div>
           <div class="r-desc">${isRev ? info.r : info.u}</div>
         `;
         container.appendChild(item);
       });
 
-      // 智能生成综合脉络推演
       const p = drawnSlots[0].userData;
       const n = drawnSlots[1].userData;
       const f = drawnSlots[2].userData;
-
-      const synthesis = generateSynthesis(q, p, n, f);
-      document.getElementById('report-synthesis').innerText = synthesis;
-
+      document.getElementById('report-synthesis').innerText = generateSynthesis(q, p, n, f);
       document.getElementById('reading-scroll').classList.add('open');
     }
 
-    // 牌阵串联综合解卦推演算法
     function generateSynthesis(q, p, n, f) {
       let flow = `从过去到未来的能量流动显示：\n`;
       flow += `在过去的阶段，你经历了「${p.info.n}」的${p.isReversed ? '失衡与挑战，导致根基带着未解的伏笔' : '积极奠基，为你带来了初始的驱动力'}；\n`;
@@ -1491,8 +1319,7 @@
       return flow;
     }
 
-    // 复制神谕命盘记录
-    window.copyPromptForAI = function() {
+    window.copyReadingRecord = function() {
       if (currentSlotIndex < 3) return;
       const q = document.getElementById('intent-input').value.trim() || '我的近期发展与破局启示';
       const c1 = drawnSlots[0].userData;
@@ -1500,23 +1327,7 @@
       const c3 = drawnSlots[2].userData;
       const synthesis = document.getElementById('report-synthesis').innerText;
 
-      const recordText = `✦ 3D 虚幻塔罗 · 圣三角神谕启示录 ✦
-━━━━━━━━━━━━━━━━━━━━
-【所问议题】：${q}
-
-【圣三角牌面】：
-I.  【过去 · 起因】：第 ${c1.info.id} 号《${c1.info.n} (${c1.info.en})》· 【${c1.isReversed ? '逆位' : '正位'}】
-    释义：${c1.isReversed ? c1.info.r : c1.info.u}
-
-II. 【现在 · 阻碍】：第 ${c2.info.id} 号《${c2.info.n} (${c2.info.en})》· 【${c2.isReversed ? '逆位' : '正位'}】
-    释义：${c2.isReversed ? c2.info.r : c2.info.u}
-
-III.【未来 · 启示】：第 ${c3.info.id} 号《${c3.info.n} (${c3.info.en})》· 【${c3.isReversed ? '逆位' : '正位'}】
-    释义：${c3.isReversed ? c3.info.r : c3.info.u}
-
-【综合因果脉络】：
-${synthesis}
-━━━━━━━━━━━━━━━━━━━━`;
+      const recordText = `✦ 3D 虚幻塔罗 · 圣三角神谕启示录 ✦\n━━━━━━━━━━━━━━━━━━━━\n【所问议题】：${q}\n\n【圣三角牌面】：\nI.  【过去 · 起因】：第 ${c1.info.id} 号《${c1.info.n} (${c1.info.en})》· 【${c1.isReversed ? '逆位' : '正位'}】\nII. 【现在 · 阻碍】：第 ${c2.info.id} 号《${c2.info.n} (${c2.info.en})》· 【${c2.isReversed ? '逆位' : '正位'}】\nIII.【未来 · 启示】：第 ${c3.info.id} 号《${c3.info.n} (${c3.info.en})》· 【${c3.isReversed ? '逆位' : '正位'}】\n\n【综合因果脉络】：\n${synthesis}\n━━━━━━━━━━━━━━━━━━━━`;
 
       navigator.clipboard.writeText(recordText).then(() => {
         const toast = document.getElementById('copied-toast');
@@ -1529,34 +1340,50 @@ ${synthesis}
       document.getElementById('reading-scroll').classList.remove('open');
     };
 
-    // 鼠标悬停星宿卡牌时的动态拔高与微观交互
+    // 移动端弹窗控制与双向同步
+    window.openMobileModal = function(type) {
+      closeAllModals();
+      const m = document.getElementById(type === 'topic' ? 'modal-topic' : 'modal-theme');
+      if (m) m.classList.add('open');
+    };
+    window.closeAllModals = function() {
+      document.querySelectorAll('.mobile-modal-overlay').forEach(el => el.classList.remove('open'));
+    };
+    window.closeMobileModals = function(e) {
+      if (e.target.classList.contains('mobile-modal-overlay')) closeAllModals();
+    };
+    window.syncTopicToMobile = function(v) {
+      document.getElementById('m-intent-input').value = v;
+    };
+    window.syncTopicToPC = function(v) {
+      document.getElementById('intent-input').value = v;
+    };
+
+    window.focusIntentInput = function() {
+      const input = document.getElementById('intent-input');
+      input.focus(); input.select();
+    };
+    window.setTopic = function(topicText) {
+      document.getElementById('intent-input').value = topicText;
+      document.getElementById('m-intent-input').value = topicText;
+    };
+
     function onMouseMove(event) {
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
       if (isInteracting) return;
-
       raycaster.setFromCamera(mouse, camera);
       const availableCards = cards.filter(c => !c.userData.isDrawn);
       const intersects = raycaster.intersectObjects(availableCards);
-
       if (intersects.length > 0) {
         const hit = intersects[0].object;
         if (hoveredCard !== hit) {
-          if (hoveredCard && !hoveredCard.userData.isDrawn) {
-            resetHover(hoveredCard);
-          }
+          if (hoveredCard && !hoveredCard.userData.isDrawn) resetHover(hoveredCard);
           hoveredCard = hit;
           document.body.style.cursor = 'pointer';
-
-          new TWEEN.Tween(hoveredCard.position)
-            .to({
-              x: hoveredCard.userData.homePos.x,
-              y: hoveredCard.userData.homePos.y + 0.6,
-              z: hoveredCard.userData.homePos.z + 0.8
-            }, 200)
-            .easing(TWEEN.Easing.Cubic.Out)
-            .start();
+          new TWEEN.Tween(hoveredCard.position).to({
+            x: hoveredCard.userData.homePos.x, y: hoveredCard.userData.homePos.y + 0.6, z: hoveredCard.userData.homePos.z + 0.8
+          }, 200).easing(TWEEN.Easing.Cubic.Out).start();
         }
       } else {
         if (hoveredCard && !hoveredCard.userData.isDrawn) {
@@ -1568,23 +1395,17 @@ ${synthesis}
     }
 
     function resetHover(card) {
-      new TWEEN.Tween(card.position)
-        .to(card.userData.homePos, 250)
-        .easing(TWEEN.Easing.Cubic.Out)
-        .start();
+      new TWEEN.Tween(card.position).to(card.userData.homePos, 250).easing(TWEEN.Easing.Cubic.Out).start();
     }
 
     function onClick(event) {
       if (isInteracting) return;
-      if (!event.target.closest('.altar-panel') && !event.target.closest('.mobile-settings-toggle')) {
-        const p = document.getElementById('altar-panel');
-        if (p) p.classList.remove('open');
-      }
       if (event.target.closest('.toolbar') || 
           event.target.closest('.altar-panel') || 
-          event.target.closest('.mobile-settings-toggle') || 
           event.target.closest('.reading-scroll') ||
-          event.target.closest('.intent-container')) {
+          event.target.closest('.pc-top-hud') ||
+          event.target.closest('.mobile-header-bar') ||
+          event.target.closest('.mobile-modal-overlay')) {
         return;
       }
 
@@ -1596,75 +1417,30 @@ ${synthesis}
       raycaster.setFromCamera(mouse, camera);
       const availableCards = cards.filter(c => !c.userData.isDrawn);
       const intersects = raycaster.intersectObjects(availableCards);
-
       if (intersects.length > 0) {
         const clicked = intersects[0].object;
         drawCardToSlot(clicked, currentSlotIndex);
       }
     }
 
-    // 相机微动视差
     function setupOrbitMotion() {
-      let targetCamX = 0;
-      let targetCamY = 3.8;
-
+      let targetCamX = 0, targetCamY = 3.8;
       window.addEventListener('mousemove', (e) => {
         const nx = (e.clientX / window.innerWidth) - 0.5;
         const ny = (e.clientY / window.innerHeight) - 0.5;
-        targetCamX = nx * 2.5;
-        targetCamY = 3.8 - ny * 1.5;
+        targetCamX = nx * 2.5; targetCamY = 3.8 - ny * 1.5;
       });
-
       function updateCamera() {
         camera.position.x += (targetCamX - camera.position.x) * 0.04;
-        camera.position.y += (targetCamY - camera.position.y) * 0.04;
         camera.lookAt(0, 0, 0);
         requestAnimationFrame(updateCamera);
       }
       updateCamera();
     }
 
-    // 移动端折叠面板切换
-    window.toggleMobileAltarPanel = function() {
-      const panel = document.getElementById('altar-panel');
-      panel.classList.toggle('open');
-    };
-
-    // 屏幕尺寸与相机视角自适应 (核心：完美适配手机竖屏 FOV)
-    function updateCameraAspect() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const aspect = w / h;
-      camera.aspect = aspect;
-
-      if (aspect < 0.85) {
-        // 手机竖屏状态：调远相机距离并适度增大 FOV，使 3D 星海与卡牌大小完美适配手机屏幕！
-        camera.fov = 58;
-        camera.position.set(0, 4.2, 22.5);
-        SPREAD_TARGET_POSITIONS[0].x = -2.35;
-        SPREAD_TARGET_POSITIONS[2].x = 2.35;
-      } else {
-        // 平板与 PC 宽屏状态
-        camera.fov = 45;
-        camera.position.set(0, 3.8, 14.5);
-        SPREAD_TARGET_POSITIONS[0].x = -3.4;
-        SPREAD_TARGET_POSITIONS[2].x = 3.4;
-      }
-      camera.updateProjectionMatrix();
-      camera.lookAt(0, 0, 0);
-      renderer.setSize(w, h);
-    }
-
-    function onWindowResize() {
-      updateCameraAspect();
-    }
-
-    // 动画循环：包含星宿微呼吸浮动
     function animate(time) {
       requestAnimationFrame(animate);
       TWEEN.update(time);
-
-      // 星罗棋布模式下的失重呼吸悬浮动效
       if (currentLayoutMode === 'constellation' && !isInteracting) {
         const t = time * 0.0015;
         cards.forEach(card => {
@@ -1676,7 +1452,6 @@ ${synthesis}
           }
         });
       }
-
       renderer.render(scene, camera);
     }
 
