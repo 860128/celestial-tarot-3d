@@ -257,37 +257,72 @@
       font-weight: 600;
     }
 
-    /* 牌背选择器 */
-    .back-selector {
+    /* 右上角神秘学祭坛配置工坊 */
+    .altar-panel {
       position: absolute;
-      top: 20px;
-      right: 24px;
+      top: 18px;
+      right: 22px;
       z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(14, 10, 26, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      padding: 10px 14px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(212, 175, 55, 0.1);
+    }
+    .panel-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: rgba(16, 11, 28, 0.7);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      padding: 5px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      color: #c9b98f;
+    }
+    .panel-row-title {
+      font-size: 11px;
+      color: #d4af37;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      font-family: 'Cinzel', serif;
+      width: 58px;
+    }
+    .back-btn-group, .theme-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
     .back-btn {
-      width: 18px;
-      height: 26px;
+      width: 20px;
+      height: 28px;
       border-radius: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       cursor: pointer;
       background-size: cover;
       background-position: center;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
     }
     .back-btn:hover, .back-btn.active {
-      border-color: #f7e4a6;
-      box-shadow: 0 0 8px #d4af37;
+      border-color: #fcedba;
+      box-shadow: 0 0 10px #d4af37;
       transform: scale(1.15);
+    }
+    .theme-chip {
+      font-size: 11px;
+      background: rgba(26, 18, 44, 0.7);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      color: #cfc2a5;
+      padding: 3px 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .theme-chip:hover, .theme-chip.active {
+      background: rgba(212, 175, 55, 0.25);
+      border-color: #fcedba;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
     }
 
     /* 圣三角综合解读长卷面板 (羊皮纸神谕卷轴) */
@@ -501,12 +536,27 @@
     </div>
   </div>
 
-  <div class="back-selector">
-    <span>牌背样式:</span>
-    <div class="back-btn active" style="background-image: url('./textures/backs/bm4.webp');" onclick="changeDeckBack('./textures/backs/bm4.webp', this)" title="黑金神域"></div>
-    <div class="back-btn" style="background-image: url('./textures/backs/bm3.webp');" onclick="changeDeckBack('./textures/backs/bm3.webp', this)" title="金纹秘典"></div>
-    <div class="back-btn" style="background-image: url('./textures/backs/bm2.webp');" onclick="changeDeckBack('./textures/backs/bm2.webp', this)" title="星月银河"></div>
-    <div class="back-btn" style="background-image: url('./textures/backs/bm.webp');" onclick="changeDeckBack('./textures/backs/bm.webp', this)" title="古典墨蓝"></div>
+  <div class="altar-panel">
+    <div class="panel-row">
+      <div class="panel-row-title">牌背样式</div>
+      <div class="back-btn-group">
+        <div class="back-btn active" style="background-image: url('./textures/backs/bm4.webp');" onclick="changeDeckBack('bm4', this)" title="黑金神域"></div>
+        <div class="back-btn" style="background-image: url('./textures/backs/bm3.webp');" onclick="changeDeckBack('bm3', this)" title="黄金秘典"></div>
+        <div class="back-btn" style="background-image: url('./textures/backs/bm2.webp');" onclick="changeDeckBack('bm2', this)" title="星月银河"></div>
+        <div class="back-btn" style="background-image: url('./textures/backs/bm.webp');" onclick="changeDeckBack('bm', this)" title="古典墨蓝"></div>
+        <div class="back-btn" id="btn-metatron" onclick="changeDeckBack('metatron', this)" title="神圣几何·麦达昶"></div>
+        <div class="back-btn" id="btn-ouroboros" onclick="changeDeckBack('ouroboros', this)" title="全知眼·衔尾蛇"></div>
+      </div>
+    </div>
+    <div class="panel-row">
+      <div class="panel-row-title">祭坛氛围</div>
+      <div class="theme-btn-group">
+        <div class="theme-chip active" onclick="setAltarTheme('cosmos', this)">🌌 星海</div>
+        <div class="theme-chip" onclick="setAltarTheme('gold-dawn', this)">🔮 法阵</div>
+        <div class="theme-chip" onclick="setAltarTheme('parchment', this)">📜 羊皮卷</div>
+        <div class="theme-chip" onclick="setAltarTheme('crimson', this)">🩸 圣殿</div>
+      </div>
+    </div>
   </div>
 
   <div class="toolbar">
@@ -533,13 +583,13 @@
 
     <div class="ai-btn-box">
       <button class="ai-connect-btn" onclick="copyPromptForAI()">
-        <span>🧙‍♂️ 复制牌面 · 发给 AI 导师深度解盘</span>
+        <span>📜 复制神谕命盘卦辞</span>
       </button>
-      <div class="ai-tip">点击后已复制当前牌面与问题，直接在对话框中粘贴发送，我将为你进行深度一对一推演！</div>
+      <div class="ai-tip">点击可将当前牌面、正逆位与综合断语复制至剪贴板，方便存档或研读。</div>
     </div>
   </div>
 
-  <div class="copied-toast" id="copied-toast">✦ 占卜卦象已复制！直接在对话框粘贴发送给我即可 ✦</div>
+  <div class="copied-toast" id="copied-toast">✦ 圣三角神谕卦辞已复制至剪贴板 ✦</div>
 
   <script>
     // --- 22 张经典大阿尔卡纳字典 ---
@@ -568,32 +618,260 @@
       { id: 21, n: "世界", en: "The World", u: "圆满达成、大同圆融、愿景实现、自由畅行。旅程终章亦是更高维度的序曲。", r: "功亏一篑、缺乏收尾决断、旅途延宕、未能圆融贯通。" }
     ];
 
-    // --- 3D 核心配置 ---
+    // --- 3D 核心配置与神秘学资产 ---
     let scene, camera, renderer, raycaster, mouse;
     let cards = [];
     const CARD_W = 2.2;
     const CARD_H = 3.8;
     const CARD_D = 0.055;
-    let currentBackUrl = './textures/backs/bm4.webp';
+    let currentBackKey = 'bm4';
     let textureLoader;
     let cardSharedBackMat, goldEdgeMat;
     let hoveredCard = null;
     let isInteracting = false;
+    let ambientLight, spotLight, bluePoint, goldPoint, altarClothMesh, starParticles;
+    let metatronTexture, ouroborosTexture;
+    const altarClothCache = {};
 
     // 牌阵模式：'constellation' (星罗棋布) | 'arch' (经典拱门)
     let currentLayoutMode = 'constellation';
 
     // 圣三角牌阵状态
-    // slot 0: 过去, slot 1: 现在, slot 2: 未来
     const drawnSlots = [null, null, null];
     let currentSlotIndex = 0;
 
     // 3D 牌桌上 3 个圣三角卡牌底座位置
     const SPREAD_TARGET_POSITIONS = [
       { x: -3.4, y: -0.6, z: 4.8 }, // 过去
-      { x: 0.0,  y: -0.6, z: 5.2 }, // 现在 (略前突)
+      { x: 0.0,  y: -0.6, z: 5.2 }, // 现在
       { x: 3.4,  y: -0.6, z: 4.8 }  // 未来
     ];
+
+    // --- 神圣几何与神秘学程序化纹理引擎 ---
+    function generateMetatronCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 896;
+      const ctx = c.getContext('2d');
+
+      // 深曜石黑底
+      ctx.fillStyle = '#0a0812';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      // 双层烫金边框
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(18, 18, c.width - 36, c.height - 36);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(26, 26, c.width - 52, c.height - 52);
+
+      const cx = c.width / 2;
+      const cy = c.height / 2;
+
+      // 麦达昶立方体核心节点
+      const r = 90;
+      const nodes = [{ x: cx, y: cy }];
+      for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3;
+        nodes.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+        nodes.push({ x: cx + Math.cos(a) * r * 2, y: cy + Math.sin(a) * r * 2 });
+      }
+
+      // 绘制所有节点之间的神圣连线
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
+        }
+      }
+
+      // 绘制 13 个同心圆环
+      nodes.forEach(n => {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 22, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(18, 12, 28, 0.8)';
+        ctx.fill();
+        ctx.strokeStyle = '#fcedba';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+
+      return c;
+    }
+
+    function generateOuroborosCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 896;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#0d0610';
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      // 装饰花边
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(18, 18, c.width - 36, c.height - 36);
+
+      const cx = c.width / 2;
+      const cy = c.height / 2;
+
+      // 衔尾蛇环 (Ouroboros Ring)
+      ctx.beginPath();
+      ctx.arc(cx, cy, 140, 0, Math.PI * 2);
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 全知之眼放射光芒
+      for (let i = 0; i < 24; i++) {
+        const a = (i * Math.PI) / 12;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 35, cy + Math.sin(a) * 35);
+        ctx.lineTo(cx + Math.cos(a) * 95, cy + Math.sin(a) * 95);
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(252, 237, 186, 0.7)' : 'rgba(212, 175, 55, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // 三角形与中心之眼
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 65);
+      ctx.lineTo(cx + 60, cy + 40);
+      ctx.lineTo(cx - 60, cy + 40);
+      ctx.closePath();
+      ctx.strokeStyle = '#fcedba';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+      ctx.fillStyle = '#fcedba';
+      ctx.fill();
+
+      return c;
+    }
+
+    // 绘制 3D 占卜法阵桌布纹理 (1024x1024)
+    function generateAltarClothCanvas(theme) {
+      const c = document.createElement('canvas');
+      c.width = 1024;
+      c.height = 1024;
+      const ctx = c.getContext('2d');
+      const cx = 512;
+      const cy = 512;
+
+      if (theme === 'gold-dawn') {
+        // 黄金黎明紫金绒布与黄道十二宫法阵
+        ctx.fillStyle = '#110920';
+        ctx.fillRect(0, 0, 1024, 1024);
+
+        // 同心圆轨道
+        [460, 420, 320, 240, 140].forEach((r, idx) => {
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = idx % 2 === 0 ? 'rgba(212, 175, 55, 0.7)' : 'rgba(212, 175, 55, 0.35)';
+          ctx.lineWidth = idx === 0 ? 5 : 2;
+          ctx.stroke();
+        });
+
+        // 12 个黄道宫刻度线与星芒
+        for (let i = 0; i < 12; i++) {
+          const a = (i * Math.PI) / 6;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * 320, cy + Math.sin(a) * 320);
+          ctx.lineTo(cx + Math.cos(a) * 460, cy + Math.sin(a) * 460);
+          ctx.strokeStyle = '#d4af37';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+
+        // 中心交织六角星法阵
+        ctx.strokeStyle = 'rgba(252, 237, 186, 0.7)';
+        ctx.lineWidth = 3;
+        for (let rot = 0; rot < 2; rot++) {
+          ctx.beginPath();
+          for (let i = 0; i < 3; i++) {
+            const a = (i * 2 * Math.PI) / 3 + (rot * Math.PI) / 3;
+            const x = cx + Math.cos(a) * 200;
+            const y = cy + Math.sin(a) * 200;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+      } else if (theme === 'parchment') {
+        // 赫尔墨斯做旧羊皮纸
+        ctx.fillStyle = '#22160d';
+        ctx.fillRect(0, 0, 1024, 1024);
+
+        // 圆规几何与行星符号轨道
+        [450, 360, 260, 150].forEach((r, i) => {
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(212, 148, 55, 0.55)';
+          ctx.lineWidth = i === 0 ? 4 : 2;
+          ctx.stroke();
+        });
+
+        // 八芒星
+        for (let rot = 0; rot < 2; rot++) {
+          ctx.beginPath();
+          for (let i = 0; i < 4; i++) {
+            const a = (i * Math.PI) / 2 + (rot * Math.PI) / 4;
+            const x = cx + Math.cos(a) * 260;
+            const y = cy + Math.sin(a) * 260;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = 'rgba(235, 180, 90, 0.65)';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+      } else if (theme === 'crimson') {
+        // 蔷薇十字圣堂
+        ctx.fillStyle = '#1f050d';
+        ctx.fillRect(0, 0, 1024, 1024);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, 440, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.7)';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        // 巨型十字
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 400); ctx.lineTo(cx, cy + 400);
+        ctx.moveTo(cx - 400, cy); ctx.lineTo(cx + 400, cy);
+        ctx.stroke();
+
+        // 蔷薇花瓣同心圆环
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4;
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(a) * 140, cy + Math.sin(a) * 140, 70, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(252, 180, 180, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+
+      return c;
+    }
 
     function init() {
       const container = document.getElementById('canvas-container');
@@ -620,6 +898,7 @@
 
       setupLights();
       setupMaterials();
+      createAltarCloth();
       createStarNebula();
       createSlotRings();
       createCards();
@@ -634,19 +913,19 @@
 
     // 灯光
     function setupLights() {
-      const ambientLight = new THREE.AmbientLight(0xdcd0ea, 0.75);
+      ambientLight = new THREE.AmbientLight(0xdcd0ea, 0.75);
       scene.add(ambientLight);
 
-      const spotLight = new THREE.SpotLight(0xfff0d8, 3.2, 35, Math.PI / 3.8, 0.35, 1);
+      spotLight = new THREE.SpotLight(0xfff0d8, 3.2, 35, Math.PI / 3.8, 0.35, 1);
       spotLight.position.set(0, 11, 9);
       spotLight.castShadow = true;
       scene.add(spotLight);
 
-      const bluePoint = new THREE.PointLight(0x6545a4, 2.0, 25);
+      bluePoint = new THREE.PointLight(0x6545a4, 2.0, 25);
       bluePoint.position.set(-11, 5, 2);
       scene.add(bluePoint);
 
-      const goldPoint = new THREE.PointLight(0xd4af37, 2.0, 25);
+      goldPoint = new THREE.PointLight(0xd4af37, 2.0, 25);
       goldPoint.position.set(11, 5, 2);
       scene.add(goldPoint);
     }
@@ -659,13 +938,39 @@
         roughness: 0.25
       });
 
-      const backTexture = textureLoader.load(currentBackUrl);
+      // 默认初始牌背
+      const backTexture = textureLoader.load('./textures/backs/bm4.webp');
       backTexture.generateMipmaps = true;
       cardSharedBackMat = new THREE.MeshStandardMaterial({
         map: backTexture,
         roughness: 0.35,
         metalness: 0.22
       });
+
+      // 预生成程序化神圣几何牌背纹理
+      const metatronCanvas = generateMetatronCanvas();
+      metatronTexture = new THREE.CanvasTexture(metatronCanvas);
+      document.getElementById('btn-metatron').style.backgroundImage = `url(${metatronCanvas.toDataURL()})`;
+
+      const ouroborosCanvas = generateOuroborosCanvas();
+      ouroborosTexture = new THREE.CanvasTexture(ouroborosCanvas);
+      document.getElementById('btn-ouroboros').style.backgroundImage = `url(${ouroborosCanvas.toDataURL()})`;
+    }
+
+    // 3D 神秘学占卜法阵桌布
+    function createAltarCloth() {
+      const clothGeo = new THREE.PlaneGeometry(16, 12);
+      const clothMat = new THREE.MeshStandardMaterial({
+        roughness: 0.65,
+        metalness: 0.15,
+        transparent: true,
+        opacity: 0.92
+      });
+      altarClothMesh = new THREE.Mesh(clothGeo, clothMat);
+      altarClothMesh.rotation.x = -Math.PI / 2;
+      altarClothMesh.position.set(0, -0.63, 4.2);
+      altarClothMesh.visible = false; // 默认星海模式不显示桌布
+      scene.add(altarClothMesh);
     }
 
     // 牌桌上的 3 个神圣几何光环底座 (Slot Rings)
@@ -863,14 +1168,75 @@
       applyLayout(true);
     };
 
-    // 切换牌背
-    window.changeDeckBack = function(newUrl, btnElem) {
-      currentBackUrl = newUrl;
-      const newBackTexture = textureLoader.load(newUrl);
-      cardSharedBackMat.map = newBackTexture;
+    // 切换牌背样式 (支持静态 WebP 和动态程序化神圣几何纹理)
+    window.changeDeckBack = function(key, btnElem) {
+      currentBackKey = key;
+      if (key === 'metatron') {
+        cardSharedBackMat.map = metatronTexture;
+      } else if (key === 'ouroboros') {
+        cardSharedBackMat.map = ouroborosTexture;
+      } else {
+        const tex = textureLoader.load(`./textures/backs/${key}.webp`);
+        cardSharedBackMat.map = tex;
+      }
       cardSharedBackMat.needsUpdate = true;
       document.querySelectorAll('.back-btn').forEach(b => b.classList.remove('active'));
       if (btnElem) btnElem.classList.add('active');
+    };
+
+    // 切换神秘学祭坛氛围与背景
+    window.setAltarTheme = function(theme, chipElem) {
+      document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('active'));
+      if (chipElem) chipElem.classList.add('active');
+
+      if (theme === 'cosmos') {
+        document.body.style.background = 'radial-gradient(circle at 50% 30%, #150f28 0%, #080614 60%, #020106 100%)';
+        altarClothMesh.visible = false;
+        scene.fog.color.setHex(0x080614);
+        ambientLight.color.setHex(0xdcd0ea);
+        spotLight.color.setHex(0xfff0d8);
+        spotLight.intensity = 3.2;
+        bluePoint.color.setHex(0x6545a4);
+        goldPoint.color.setHex(0xd4af37);
+      } else {
+        altarClothMesh.visible = true;
+
+        if (!altarClothCache[theme]) {
+          const canvas = generateAltarClothCanvas(theme);
+          altarClothCache[theme] = new THREE.CanvasTexture(canvas);
+        }
+        altarClothMesh.material.map = altarClothCache[theme];
+        altarClothMesh.material.needsUpdate = true;
+
+        if (theme === 'gold-dawn') {
+          // 黄金黎明紫金绒布与黄道法阵
+          document.body.style.background = 'radial-gradient(circle at 50% 40%, #1e1136 0%, #0b0717 65%, #030208 100%)';
+          scene.fog.color.setHex(0x0b0717);
+          ambientLight.color.setHex(0xead8be);
+          spotLight.color.setHex(0xfff5dc);
+          spotLight.intensity = 3.6;
+          bluePoint.color.setHex(0x562a80);
+          goldPoint.color.setHex(0xeab840);
+        } else if (theme === 'parchment') {
+          // 赫尔墨斯做旧古老羊皮纸
+          document.body.style.background = 'radial-gradient(circle at 50% 35%, #2c1e15 0%, #140d09 65%, #060403 100%)';
+          scene.fog.color.setHex(0x140d09);
+          ambientLight.color.setHex(0xdfbe98);
+          spotLight.color.setHex(0xffe2ab);
+          spotLight.intensity = 3.1;
+          bluePoint.color.setHex(0x8f5532);
+          goldPoint.color.setHex(0xd88a22);
+        } else if (theme === 'crimson') {
+          // 蔷薇十字暗夜圣堂
+          document.body.style.background = 'radial-gradient(circle at 50% 35%, #2a0914 0%, #120308 65%, #040103 100%)';
+          scene.fog.color.setHex(0x120308);
+          ambientLight.color.setHex(0xdaa6a6);
+          spotLight.color.setHex(0xffded2);
+          spotLight.intensity = 3.5;
+          bluePoint.color.setHex(0x9c1a36);
+          goldPoint.color.setHex(0xd4af37);
+        }
+      }
     };
 
     // 洗牌逻辑
@@ -1081,28 +1447,37 @@
       return flow;
     }
 
-    // 复制占卜数据，方便直接发给当前对话的 AI（即你和我）进行深度大师解盘！
+    // 复制神谕命盘记录
     window.copyPromptForAI = function() {
       if (currentSlotIndex < 3) return;
       const q = document.getElementById('intent-input').value.trim() || '我的近期发展与破局启示';
       const c1 = drawnSlots[0].userData;
       const c2 = drawnSlots[1].userData;
       const c3 = drawnSlots[2].userData;
+      const synthesis = document.getElementById('report-synthesis').innerText;
 
-      const promptText = `你好！我刚刚在 3D 塔罗模拟器中完成了【圣三角牌阵】的占卜，请作为资深塔罗大师为我做深度心理与现实结合的推演解读：
+      const recordText = `✦ 3D 虚幻塔罗 · 圣三角神谕启示录 ✦
+━━━━━━━━━━━━━━━━━━━━
+【所问议题】：${q}
 
-🔮 【我求问的议题】：${q}
-📜 【圣三角牌面信息】：
-1. 【过去 · 起因】：第 ${c1.info.id} 号牌《${c1.info.n} (${c1.info.en})》· 【${c1.isReversed ? '逆位' : '正位'}】
-2. 【现在 · 阻碍】：第 ${c2.info.id} 号牌《${c2.info.n} (${c2.info.en})》· 【${c2.isReversed ? '逆位' : '正位'}】
-3. 【未来 · 启示】：第 ${c3.info.id} 号牌《${c3.info.n} (${c3.info.en})》· 【${c3.isReversed ? '逆位' : '正位'}】
+【圣三角牌面】：
+I.  【过去 · 起因】：第 ${c1.info.id} 号《${c1.info.n} (${c1.info.en})》· 【${c1.isReversed ? '逆位' : '正位'}】
+    释义：${c1.isReversed ? c1.info.r : c1.info.u}
 
-请帮我把这三张牌的因果脉络贯穿起来，针对我的议题给出具体的破局洞察与行动建议！`;
+II. 【现在 · 阻碍】：第 ${c2.info.id} 号《${c2.info.n} (${c2.info.en})》· 【${c2.isReversed ? '逆位' : '正位'}】
+    释义：${c2.isReversed ? c2.info.r : c2.info.u}
 
-      navigator.clipboard.writeText(promptText).then(() => {
+III.【未来 · 启示】：第 ${c3.info.id} 号《${c3.info.n} (${c3.info.en})》· 【${c3.isReversed ? '逆位' : '正位'}】
+    释义：${c3.isReversed ? c3.info.r : c3.info.u}
+
+【综合因果脉络】：
+${synthesis}
+━━━━━━━━━━━━━━━━━━━━`;
+
+      navigator.clipboard.writeText(recordText).then(() => {
         const toast = document.getElementById('copied-toast');
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3500);
+        setTimeout(() => toast.classList.remove('show'), 3000);
       });
     };
 
@@ -1158,7 +1533,7 @@
     function onClick(event) {
       if (isInteracting) return;
       if (event.target.closest('.toolbar') || 
-          event.target.closest('.back-selector') || 
+          event.target.closest('.altar-panel') || 
           event.target.closest('.reading-scroll') ||
           event.target.closest('.intent-container')) {
         return;
