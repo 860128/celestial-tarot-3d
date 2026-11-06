@@ -68,34 +68,100 @@
       backdrop-filter: blur(8px);
     }
 
-    /* 意念/问题输入栏 */
-    .intent-box {
+    /* 意念/问题输入区域 (高交互感设计) */
+    .intent-container {
       position: absolute;
-      top: 86px;
+      top: 80px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 10;
       display: flex;
-      gap: 10px;
-      background: rgba(14, 10, 24, 0.75);
-      border: 1px solid rgba(212, 175, 55, 0.3);
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+    }
+    .intent-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 11, 30, 0.88);
+      border: 1.5px solid rgba(212, 175, 55, 0.45);
       padding: 6px 14px;
       border-radius: 30px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(212, 175, 55, 0.15);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: text;
+    }
+    .intent-box:hover, .intent-box:focus-within {
+      border-color: #fcedba;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 25px rgba(212, 175, 55, 0.4);
+      transform: translateY(-1px);
+    }
+    .intent-label {
+      font-size: 13px;
+      color: #d4af37;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      font-weight: 600;
     }
     .intent-input {
       background: transparent;
       border: none;
       outline: none;
-      color: #f7e4a6;
+      color: #fff4d1;
       font-family: inherit;
-      font-size: 13px;
-      width: 280px;
-      letter-spacing: 1px;
+      font-size: 13.5px;
+      width: 290px;
+      letter-spacing: 0.6px;
     }
     .intent-input::placeholder {
       color: rgba(229, 216, 184, 0.4);
+    }
+    .edit-badge {
+      font-size: 11px;
+      color: #150f28;
+      background: linear-gradient(135deg, #fcedba 0%, #d4af37 100%);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    /* 快捷预设标签 */
+    .topic-chips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .topic-chip-label {
+      font-size: 11px;
+      color: rgba(212, 175, 55, 0.7);
+      letter-spacing: 1px;
+    }
+    .topic-chip {
+      font-size: 11px;
+      background: rgba(26, 18, 46, 0.75);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      color: #dfd4ba;
+      padding: 3px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(6px);
+    }
+    .topic-chip:hover {
+      background: rgba(212, 175, 55, 0.25);
+      border-color: #fcedba;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
     }
 
     /* 底部圣三角牌位插槽指示器 (Slots) */
@@ -402,9 +468,19 @@
     <div class="ritual-status" id="ritual-status">✦ 请心怀所问，点击下方星辰之牌选取第 1 张【过去】 ✦</div>
   </header>
 
-  <div class="intent-box">
-    <span>🔮 占卜议题：</span>
-    <input type="text" id="intent-input" class="intent-input" placeholder="例如：我的事业突破口在哪？近期的发展趋势？" value="我近期的发展态势与破局启示">
+  <div class="intent-container">
+    <div class="intent-box" onclick="focusIntentInput()">
+      <div class="intent-label">🔮 占卜议题:</div>
+      <input type="text" id="intent-input" class="intent-input" placeholder="点击输入心中所问（如：最近换工作合适吗？）" value="我近期的发展态势与破局启示">
+      <div class="edit-badge" title="点击即可修改议题">✏️ 自定义</div>
+    </div>
+    <div class="topic-chips">
+      <span class="topic-chip-label">快捷灵感:</span>
+      <div class="topic-chip" onclick="setTopic('💼 近期职场发展与瓶颈突破')">💼 职场发展</div>
+      <div class="topic-chip" onclick="setTopic('❤️ 情感关系的深层因果与走向')">❤️ 情感关系</div>
+      <div class="topic-chip" onclick="setTopic('🌟 个人成长中的迷茫与内在心结')">🌟 个人心结</div>
+      <div class="topic-chip" onclick="setTopic('✨ 今日运势与灵性启示')">✨ 今日运势</div>
+    </div>
   </div>
 
   <div class="spread-slots-bar" id="slots-bar">
@@ -759,6 +835,25 @@
       });
     }
 
+    // 聚焦与修改占卜议题
+    window.focusIntentInput = function() {
+      const input = document.getElementById('intent-input');
+      input.focus();
+      input.select();
+    };
+
+    window.setTopic = function(topicText) {
+      const input = document.getElementById('intent-input');
+      input.value = topicText;
+      const box = document.querySelector('.intent-box');
+      box.style.borderColor = '#fcedba';
+      box.style.boxShadow = '0 0 25px rgba(212, 175, 55, 0.7)';
+      setTimeout(() => {
+        box.style.borderColor = '';
+        box.style.boxShadow = '';
+      }, 600);
+    };
+
     // 切换布局模式
     window.toggleLayout = function() {
       if (isInteracting) return;
@@ -1065,7 +1160,7 @@
       if (event.target.closest('.toolbar') || 
           event.target.closest('.back-selector') || 
           event.target.closest('.reading-scroll') ||
-          event.target.closest('.intent-box')) {
+          event.target.closest('.intent-container')) {
         return;
       }
 
