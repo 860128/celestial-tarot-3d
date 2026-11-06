@@ -493,6 +493,186 @@
     .copied-toast.show {
       transform: translateX(-50%) translateY(0);
     }
+    /* 移动端专属浮动切换设置按钮（平时折叠） */
+    .mobile-settings-toggle {
+      display: none;
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 25;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(18, 12, 32, 0.85);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #fcedba;
+      font-size: 16px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    /* 移动端 (手机竖屏) 深度响应式适配 */
+    @media (max-width: 768px) {
+      .mobile-settings-toggle {
+        display: flex;
+      }
+
+      /* 顶部精简 */
+      header {
+        top: 10px;
+        width: 100%;
+        padding: 0 46px 0 14px;
+        box-sizing: border-box;
+      }
+      h1 {
+        font-size: 16px;
+        letter-spacing: 2px;
+        margin-bottom: 2px;
+      }
+      .ritual-status {
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        padding: 3px 10px;
+        margin-top: 2px;
+        max-width: 86vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* 占卜议题输入区 */
+      .intent-container {
+        top: 66px;
+        width: 92vw;
+        gap: 5px;
+      }
+      .intent-box {
+        width: 100%;
+        padding: 5px 12px;
+      }
+      .intent-input {
+        width: 100%;
+        font-size: 12px;
+      }
+      .intent-label {
+        font-size: 12px;
+      }
+      .edit-badge {
+        font-size: 10px;
+        padding: 1px 6px;
+      }
+      .topic-chips {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 4px;
+        justify-content: flex-start;
+        -webkit-overflow-scrolling: touch;
+      }
+      .topic-chips::-webkit-scrollbar {
+        display: none;
+      }
+      .topic-chip {
+        font-size: 10px;
+        padding: 2px 8px;
+        flex-shrink: 0;
+      }
+
+      /* 右上角面板在手机上默认折叠为侧滑抽屉/浮层 */
+      .altar-panel {
+        top: 54px;
+        right: 12px;
+        width: auto;
+        max-width: 92vw;
+        padding: 10px 12px;
+        transform: scale(0);
+        transform-origin: top right;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .altar-panel.open {
+        transform: scale(1);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* 圣三角指示器插槽在手机端紧凑水平等宽排列 */
+      .spread-slots-bar {
+        bottom: 64px;
+        width: 94vw;
+        gap: 6px;
+        justify-content: space-between;
+      }
+      .slot-indicator {
+        flex: 1;
+        width: auto;
+        padding: 6px 2px;
+        border-radius: 8px;
+      }
+      .slot-tag {
+        font-size: 9px;
+      }
+      .slot-name {
+        font-size: 11px;
+      }
+      .slot-desc {
+        font-size: 10px;
+      }
+
+      /* 底部操作工具栏在手机端整齐平铺一行 */
+      .toolbar {
+        bottom: 12px;
+        width: 94vw;
+        padding: 6px 8px;
+        gap: 6px;
+        border-radius: 30px;
+        justify-content: space-between;
+      }
+      .btn {
+        flex: 1;
+        padding: 6px 2px;
+        font-size: 11px;
+        border-radius: 16px;
+        justify-content: center;
+        gap: 2px;
+        letter-spacing: 0;
+        white-space: nowrap;
+      }
+
+      /* 解读长卷面板在手机端变成优雅的底部抽屉 (Bottom Sheet) */
+      .reading-scroll {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100vw;
+        max-height: 80vh;
+        border-radius: 20px 20px 0 0;
+        padding: 20px 18px 24px 18px;
+        transform: translateY(105%);
+      }
+      .reading-scroll.open {
+        transform: translateY(0);
+      }
+      .scroll-title {
+        font-size: 17px;
+      }
+      .scroll-question {
+        font-size: 12px;
+      }
+      .r-card-name {
+        font-size: 14px;
+      }
+      .r-desc {
+        font-size: 12px;
+      }
+      .synthesis-text {
+        font-size: 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -536,7 +716,9 @@
     </div>
   </div>
 
-  <div class="altar-panel">
+  <div class="mobile-settings-toggle" onclick="toggleMobileAltarPanel()" title="牌背与星海设置">🎨</div>
+
+  <div class="altar-panel" id="altar-panel">
     <div class="panel-row">
       <div class="panel-row-title">牌背样式</div>
       <div class="back-btn-group">
@@ -560,10 +742,10 @@
   </div>
 
   <div class="toolbar">
-    <button class="btn" onclick="toggleLayout()"><span id="layout-icon">🌌</span> <span id="layout-text">切换为拱门牌阵</span></button>
-    <button class="btn" onclick="shuffleDeck()">💫 星辰洗牌</button>
-    <button class="btn" onclick="autoDrawThree()">✨ 灵感一键三抽</button>
-    <button class="btn primary" onclick="resetRitual()">🔄 重启仪式</button>
+    <button class="btn" onclick="toggleLayout()"><span id="layout-icon">🌌</span> <span id="layout-text">拱门</span></button>
+    <button class="btn" onclick="shuffleDeck()">💫 洗牌</button>
+    <button class="btn" onclick="autoDrawThree()">✨ 一键三抽</button>
+    <button class="btn primary" onclick="resetRitual()">🔄 重置</button>
   </div>
 
   <!-- 圣三角综合解盘报告长卷 -->
@@ -787,6 +969,7 @@
 
       setupLights();
       setupMaterials();
+      updateCameraAspect();
       createStarNebula();
       createSlotRings();
       createCards();
@@ -1393,8 +1576,13 @@ ${synthesis}
 
     function onClick(event) {
       if (isInteracting) return;
+      if (!event.target.closest('.altar-panel') && !event.target.closest('.mobile-settings-toggle')) {
+        const p = document.getElementById('altar-panel');
+        if (p) p.classList.remove('open');
+      }
       if (event.target.closest('.toolbar') || 
           event.target.closest('.altar-panel') || 
+          event.target.closest('.mobile-settings-toggle') || 
           event.target.closest('.reading-scroll') ||
           event.target.closest('.intent-container')) {
         return;
@@ -1436,10 +1624,39 @@ ${synthesis}
       updateCamera();
     }
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
+    // 移动端折叠面板切换
+    window.toggleMobileAltarPanel = function() {
+      const panel = document.getElementById('altar-panel');
+      panel.classList.toggle('open');
+    };
+
+    // 屏幕尺寸与相机视角自适应 (核心：完美适配手机竖屏 FOV)
+    function updateCameraAspect() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const aspect = w / h;
+      camera.aspect = aspect;
+
+      if (aspect < 0.85) {
+        // 手机竖屏状态：调远相机距离并适度增大 FOV，使 3D 星海与卡牌大小完美适配手机屏幕！
+        camera.fov = 58;
+        camera.position.set(0, 4.2, 22.5);
+        SPREAD_TARGET_POSITIONS[0].x = -2.35;
+        SPREAD_TARGET_POSITIONS[2].x = 2.35;
+      } else {
+        // 平板与 PC 宽屏状态
+        camera.fov = 45;
+        camera.position.set(0, 3.8, 14.5);
+        SPREAD_TARGET_POSITIONS[0].x = -3.4;
+        SPREAD_TARGET_POSITIONS[2].x = 3.4;
+      }
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.lookAt(0, 0, 0);
+      renderer.setSize(w, h);
+    }
+
+    function onWindowResize() {
+      updateCameraAspect();
     }
 
     // 动画循环：包含星宿微呼吸浮动
