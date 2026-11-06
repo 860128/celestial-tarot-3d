@@ -549,12 +549,12 @@
       </div>
     </div>
     <div class="panel-row">
-      <div class="panel-row-title">祭坛氛围</div>
+      <div class="panel-row-title">星海天象</div>
       <div class="theme-btn-group">
-        <div class="theme-chip active" onclick="setAltarTheme('cosmos', this)">🌌 星海</div>
-        <div class="theme-chip" onclick="setAltarTheme('gold-dawn', this)">🔮 法阵</div>
-        <div class="theme-chip" onclick="setAltarTheme('parchment', this)">📜 羊皮卷</div>
-        <div class="theme-chip" onclick="setAltarTheme('crimson', this)">🩸 圣殿</div>
+        <div class="theme-chip active" onclick="setCosmicTheme('purple', this)">🌌 紫金星云</div>
+        <div class="theme-chip" onclick="setCosmicTheme('blue', this)">🌠 蓝夜银河</div>
+        <div class="theme-chip" onclick="setCosmicTheme('gold', this)">✨ 暖金星芒</div>
+        <div class="theme-chip" onclick="setCosmicTheme('dark', this)">🌑 纯净虚空</div>
       </div>
     </div>
   </div>
@@ -762,117 +762,6 @@
       return c;
     }
 
-    // 绘制 3D 占卜法阵桌布纹理 (1024x1024)
-    function generateAltarClothCanvas(theme) {
-      const c = document.createElement('canvas');
-      c.width = 1024;
-      c.height = 1024;
-      const ctx = c.getContext('2d');
-      const cx = 512;
-      const cy = 512;
-
-      if (theme === 'gold-dawn') {
-        // 黄金黎明紫金绒布与黄道十二宫法阵
-        ctx.fillStyle = '#110920';
-        ctx.fillRect(0, 0, 1024, 1024);
-
-        // 同心圆轨道
-        [460, 420, 320, 240, 140].forEach((r, idx) => {
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.strokeStyle = idx % 2 === 0 ? 'rgba(212, 175, 55, 0.7)' : 'rgba(212, 175, 55, 0.35)';
-          ctx.lineWidth = idx === 0 ? 5 : 2;
-          ctx.stroke();
-        });
-
-        // 12 个黄道宫刻度线与星芒
-        for (let i = 0; i < 12; i++) {
-          const a = (i * Math.PI) / 6;
-          ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(a) * 320, cy + Math.sin(a) * 320);
-          ctx.lineTo(cx + Math.cos(a) * 460, cy + Math.sin(a) * 460);
-          ctx.strokeStyle = '#d4af37';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-        }
-
-        // 中心交织六角星法阵
-        ctx.strokeStyle = 'rgba(252, 237, 186, 0.7)';
-        ctx.lineWidth = 3;
-        for (let rot = 0; rot < 2; rot++) {
-          ctx.beginPath();
-          for (let i = 0; i < 3; i++) {
-            const a = (i * 2 * Math.PI) / 3 + (rot * Math.PI) / 3;
-            const x = cx + Math.cos(a) * 200;
-            const y = cy + Math.sin(a) * 200;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          ctx.closePath();
-          ctx.stroke();
-        }
-      } else if (theme === 'parchment') {
-        // 赫尔墨斯做旧羊皮纸
-        ctx.fillStyle = '#22160d';
-        ctx.fillRect(0, 0, 1024, 1024);
-
-        // 圆规几何与行星符号轨道
-        [450, 360, 260, 150].forEach((r, i) => {
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(212, 148, 55, 0.55)';
-          ctx.lineWidth = i === 0 ? 4 : 2;
-          ctx.stroke();
-        });
-
-        // 八芒星
-        for (let rot = 0; rot < 2; rot++) {
-          ctx.beginPath();
-          for (let i = 0; i < 4; i++) {
-            const a = (i * Math.PI) / 2 + (rot * Math.PI) / 4;
-            const x = cx + Math.cos(a) * 260;
-            const y = cy + Math.sin(a) * 260;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          ctx.closePath();
-          ctx.strokeStyle = 'rgba(235, 180, 90, 0.65)';
-          ctx.lineWidth = 2.5;
-          ctx.stroke();
-        }
-      } else if (theme === 'crimson') {
-        // 蔷薇十字圣堂
-        ctx.fillStyle = '#1f050d';
-        ctx.fillRect(0, 0, 1024, 1024);
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, 440, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.7)';
-        ctx.lineWidth = 5;
-        ctx.stroke();
-
-        // 巨型十字
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - 400); ctx.lineTo(cx, cy + 400);
-        ctx.moveTo(cx - 400, cy); ctx.lineTo(cx + 400, cy);
-        ctx.stroke();
-
-        // 蔷薇花瓣同心圆环
-        for (let i = 0; i < 8; i++) {
-          const a = (i * Math.PI) / 4;
-          ctx.beginPath();
-          ctx.arc(cx + Math.cos(a) * 140, cy + Math.sin(a) * 140, 70, 0, Math.PI * 2);
-          ctx.strokeStyle = 'rgba(252, 180, 180, 0.4)';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-      }
-
-      return c;
-    }
-
     function init() {
       const container = document.getElementById('canvas-container');
 
@@ -898,7 +787,6 @@
 
       setupLights();
       setupMaterials();
-      createAltarCloth();
       createStarNebula();
       createSlotRings();
       createCards();
@@ -955,22 +843,6 @@
       const ouroborosCanvas = generateOuroborosCanvas();
       ouroborosTexture = new THREE.CanvasTexture(ouroborosCanvas);
       document.getElementById('btn-ouroboros').style.backgroundImage = `url(${ouroborosCanvas.toDataURL()})`;
-    }
-
-    // 3D 神秘学占卜法阵桌布
-    function createAltarCloth() {
-      const clothGeo = new THREE.PlaneGeometry(16, 12);
-      const clothMat = new THREE.MeshStandardMaterial({
-        roughness: 0.65,
-        metalness: 0.15,
-        transparent: true,
-        opacity: 0.92
-      });
-      altarClothMesh = new THREE.Mesh(clothGeo, clothMat);
-      altarClothMesh.rotation.x = -Math.PI / 2;
-      altarClothMesh.position.set(0, -0.63, 4.2);
-      altarClothMesh.visible = false; // 默认星海模式不显示桌布
-      scene.add(altarClothMesh);
     }
 
     // 牌桌上的 3 个神圣几何光环底座 (Slot Rings)
@@ -1184,58 +1056,47 @@
       if (btnElem) btnElem.classList.add('active');
     };
 
-    // 切换神秘学祭坛氛围与背景
-    window.setAltarTheme = function(theme, chipElem) {
+    // 切换背后纯粹的宇宙深空星海天象 (绝无任何阻挡视线的桌子)
+    window.setCosmicTheme = function(theme, chipElem) {
       document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('active'));
       if (chipElem) chipElem.classList.add('active');
 
-      if (theme === 'cosmos') {
+      if (theme === 'purple') {
+        // 紫金星云 (经典深邃)
         document.body.style.background = 'radial-gradient(circle at 50% 30%, #150f28 0%, #080614 60%, #020106 100%)';
-        altarClothMesh.visible = false;
         scene.fog.color.setHex(0x080614);
         ambientLight.color.setHex(0xdcd0ea);
         spotLight.color.setHex(0xfff0d8);
         spotLight.intensity = 3.2;
         bluePoint.color.setHex(0x6545a4);
         goldPoint.color.setHex(0xd4af37);
-      } else {
-        altarClothMesh.visible = true;
-
-        if (!altarClothCache[theme]) {
-          const canvas = generateAltarClothCanvas(theme);
-          altarClothCache[theme] = new THREE.CanvasTexture(canvas);
-        }
-        altarClothMesh.material.map = altarClothCache[theme];
-        altarClothMesh.material.needsUpdate = true;
-
-        if (theme === 'gold-dawn') {
-          // 黄金黎明紫金绒布与黄道法阵
-          document.body.style.background = 'radial-gradient(circle at 50% 40%, #1e1136 0%, #0b0717 65%, #030208 100%)';
-          scene.fog.color.setHex(0x0b0717);
-          ambientLight.color.setHex(0xead8be);
-          spotLight.color.setHex(0xfff5dc);
-          spotLight.intensity = 3.6;
-          bluePoint.color.setHex(0x562a80);
-          goldPoint.color.setHex(0xeab840);
-        } else if (theme === 'parchment') {
-          // 赫尔墨斯做旧古老羊皮纸
-          document.body.style.background = 'radial-gradient(circle at 50% 35%, #2c1e15 0%, #140d09 65%, #060403 100%)';
-          scene.fog.color.setHex(0x140d09);
-          ambientLight.color.setHex(0xdfbe98);
-          spotLight.color.setHex(0xffe2ab);
-          spotLight.intensity = 3.1;
-          bluePoint.color.setHex(0x8f5532);
-          goldPoint.color.setHex(0xd88a22);
-        } else if (theme === 'crimson') {
-          // 蔷薇十字暗夜圣堂
-          document.body.style.background = 'radial-gradient(circle at 50% 35%, #2a0914 0%, #120308 65%, #040103 100%)';
-          scene.fog.color.setHex(0x120308);
-          ambientLight.color.setHex(0xdaa6a6);
-          spotLight.color.setHex(0xffded2);
-          spotLight.intensity = 3.5;
-          bluePoint.color.setHex(0x9c1a36);
-          goldPoint.color.setHex(0xd4af37);
-        }
+      } else if (theme === 'blue') {
+        // 蓝夜银河 (清冷浩瀚)
+        document.body.style.background = 'radial-gradient(circle at 50% 30%, #0d1a33 0%, #050b18 60%, #01040a 100%)';
+        scene.fog.color.setHex(0x050b18);
+        ambientLight.color.setHex(0xbcd4ea);
+        spotLight.color.setHex(0xe8f2ff);
+        spotLight.intensity = 3.0;
+        bluePoint.color.setHex(0x2868b0);
+        goldPoint.color.setHex(0x88c0d0);
+      } else if (theme === 'gold') {
+        // 暖金星芒 (神圣拂晓)
+        document.body.style.background = 'radial-gradient(circle at 50% 30%, #26190a 0%, #110a04 60%, #040201 100%)';
+        scene.fog.color.setHex(0x110a04);
+        ambientLight.color.setHex(0xead8be);
+        spotLight.color.setHex(0xfff0d0);
+        spotLight.intensity = 3.4;
+        bluePoint.color.setHex(0x9a5820);
+        goldPoint.color.setHex(0xe8b835);
+      } else if (theme === 'dark') {
+        // 纯净虚空 (极致黑夜)
+        document.body.style.background = 'radial-gradient(circle at 50% 30%, #0e0d14 0%, #050408 60%, #000002 100%)';
+        scene.fog.color.setHex(0x050408);
+        ambientLight.color.setHex(0x8a8494);
+        spotLight.color.setHex(0xffffff);
+        spotLight.intensity = 2.8;
+        bluePoint.color.setHex(0x3a3048);
+        goldPoint.color.setHex(0xbaa050);
       }
     };
 
